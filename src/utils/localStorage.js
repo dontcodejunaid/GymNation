@@ -1,6 +1,6 @@
-// LocalStorage Persistence Layer for BodyFit Bookings
+// LocalStorage Persistence Layer for Gymnation Bookings
 
-const BOOKINGS_KEY = 'bodyfit_bookings';
+const BOOKINGS_KEY = 'gymnation_bookings';
 
 /**
  * Get all saved bookings from LocalStorage
@@ -24,10 +24,10 @@ export function getBookings() {
 export function saveBooking(bookingData) {
   const existingBookings = getBookings();
 
-  // Generate unique booking reference ID (e.g. BF-84920)
+  // Generate unique booking reference ID (e.g. GN-84920)
   const randomId = Math.floor(10000 + Math.random() * 90000);
   const bookingWithId = {
-    id: `BF-${randomId}`,
+    id: `GN-${randomId}`,
     ...bookingData,
     status: 'Pending',
     createdAt: new Date().toISOString()
@@ -43,7 +43,7 @@ export function saveBooking(bookingData) {
 
     // Real-time class seat capacity update
     try {
-      const rawClasses = localStorage.getItem('bodyfit_classes');
+      const rawClasses = localStorage.getItem('gymnation_classes');
       if (rawClasses) {
         const classes = JSON.parse(rawClasses);
         const updatedClasses = classes.map(c => {
@@ -56,14 +56,14 @@ export function saveBooking(bookingData) {
           }
           return c;
         });
-        localStorage.setItem('bodyfit_classes', JSON.stringify(updatedClasses));
+        localStorage.setItem('gymnation_classes', JSON.stringify(updatedClasses));
       }
     } catch (err) {
       console.warn('Error updating class seats in saveBooking:', err);
     }
 
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bodyfit-schedule-update'));
+      window.dispatchEvent(new CustomEvent('gymnation-schedule-update'));
     }
   } catch (error) {
     console.error('Error saving booking to localStorage:', error);
@@ -112,7 +112,7 @@ export function updateBookingStatus(id, newStatus) {
   return updated;
 }
 
-const PROFILES_KEY = 'bodyfit_user_profiles';
+const PROFILES_KEY = 'gymnation_user_profiles';
 
 export function getUserProfiles() {
   try {

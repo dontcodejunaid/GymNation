@@ -32,7 +32,7 @@ export default function AnalyticsPanel({ bookings }) {
       { key: 'firstBooking', label: 'First Booking' },
       { key: 'lastBooking', label: 'Last Booking' },
     ]);
-    downloadCsv(`bodyfit-members-${todayISO()}.csv`, csv);
+    downloadCsv(`gymnation-members-${todayISO()}.csv`, csv);
   };
 
   return (

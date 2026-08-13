@@ -147,7 +147,7 @@ const FAQS = [
     keywords: ['where', 'location', 'address', 'reach', 'direction', 'directions', 'located', 'map', 'metro', 'how to reach'],
     question: 'Where are you located?',
     answer:
-      'D-20, Amrit Nagar, Block D, New Delhi, Delhi 110049 — in South Delhi. The address links straight to Google Maps in the footer if you want directions.',
+      '01, Gollahalli Main Rd, Shikaripalya, Electronic City, Bengaluru, Karnataka 560100 — in Electronic City. The address links straight to Google Maps in the footer if you want directions.',
   },
   {
     id: 'parking',
@@ -237,9 +237,9 @@ const statusSentence = () => {
 
 // Rotated so a repeat "hi" doesn't return the identical line.
 const GREETING_OPENERS = [
-  (name) => `${timeOfDayGreeting()}! I'm ${name}, your Body Fit assistant. 💪`,
-  (name) => `Hey there! ${name} here from Body Fit. 👋`,
-  (name) => `Hi! I'm ${name}, the Body Fit assistant.`,
+  (name) => `${timeOfDayGreeting()}! I'm ${name}, your Gymnation assistant. 💪`,
+  (name) => `Hey there! ${name} here from Gymnation. 👋`,
+  (name) => `Hi! I'm ${name}, the Gymnation assistant.`,
 ];
 
 let greetingTurn = 0;
@@ -309,12 +309,12 @@ function respondTo(input) {
   const cleaned = normalise(input);
   const words = cleaned.split(' ').filter(Boolean);
 
-  if (!cleaned) return { text: `Ask me anything about Body Fit — I'm ${BOT_NAME}.` };
+  if (!cleaned) return { text: `Ask me anything about Gymnation — I'm ${BOT_NAME}.` };
 
   // Checked before the length guard: these are questions, not filler.
   if (IDENTITY.some((phrase) => cleaned.includes(phrase))) {
     return {
-      text: `I'm ${BOT_NAME}, the Body Fit assistant — a simple helper bot, not a real person. I can answer questions about pricing, timings, classes, trainers and facilities. For anything I can't cover, the WhatsApp button below reaches the actual team.`,
+      text: `I'm ${BOT_NAME}, the Gymnation assistant — a simple helper bot, not a real person. I can answer questions about pricing, timings, classes, trainers and facilities. For anything I can't cover, the WhatsApp button below reaches the actual team.`,
       chips: STARTER_CHIPS,
     };
   }
@@ -368,7 +368,7 @@ function respondTo(input) {
 
 const openingMessage = () => ({
   from: 'bot',
-  text: `${timeOfDayGreeting()}! I'm ${BOT_NAME}, your Body Fit assistant. 💪\n\n${statusSentence()}\n\nHow can I help you today?`,
+  text: `${timeOfDayGreeting()}! I'm ${BOT_NAME}, your Gymnation assistant. 💪\n\n${statusSentence()}\n\nHow can I help you today?`,
   chips: STARTER_CHIPS,
 });
 
@@ -383,7 +383,7 @@ export default function FaqChatbot({ open, onClose }) {
   const status = getOpenStatus();
 
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${WhatsAppConfig.ActiveNumber}&text=${encodeURIComponent(
-    'Hi Body Fit! I have a question.'
+    'Hi Gymnation! I have a question.'
   )}`;
 
   const suggestions = useMemo(
@@ -437,7 +437,7 @@ export default function FaqChatbot({ open, onClose }) {
           </div>
           <div className="min-w-0">
             <div className="text-sm font-bold text-white">
-              {BOT_NAME} <span className="font-medium text-slate-500">· Body Fit</span>
+              {BOT_NAME} <span className="font-medium text-slate-500">· Gymnation</span>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
               <span

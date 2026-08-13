@@ -26,7 +26,7 @@ export default function Trainers({ onSelectTrainer }) {
     async function loadTrainers() {
       let combined = [];
       try {
-        const rawLocal = localStorage.getItem('bodyfit_trainers');
+        const rawLocal = localStorage.getItem('gymnation_trainers');
         const localList = rawLocal ? JSON.parse(rawLocal) : [];
         const fbList = (await getTrainersFromFirebase()) || [];
 
@@ -79,13 +79,13 @@ export default function Trainers({ onSelectTrainer }) {
     });
 
     const handleStorageChange = () => loadTrainers();
-    window.addEventListener('bodyfit_trainers_updated', handleStorageChange);
+    window.addEventListener('gymnation_trainers_updated', handleStorageChange);
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
       isMounted = false;
       unsubscribe();
-      window.removeEventListener('bodyfit_trainers_updated', handleStorageChange);
+      window.removeEventListener('gymnation_trainers_updated', handleStorageChange);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
@@ -138,7 +138,7 @@ export default function Trainers({ onSelectTrainer }) {
           </div>
 
           <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Train With Delhi’s Premier <br />
+            Train With Bengaluru’s Premier <br />
             <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-400 bg-clip-text text-transparent">
               Fitness & Transformation Specialists
             </span>
@@ -265,7 +265,7 @@ export default function Trainers({ onSelectTrainer }) {
 
                 {/* Bio text */}
                 <p className="text-xs sm:text-sm text-slate-300 leading-relaxed line-clamp-3">
-                  {trainer.bio || 'Professional BodyFit fitness transformation coach.'}
+                  {trainer.bio || 'Professional Gymnation fitness transformation coach.'}
                 </p>
 
                 {/* Action Buttons */}
@@ -342,7 +342,7 @@ export default function Trainers({ onSelectTrainer }) {
             {/* Bio */}
             <div>
               <h4 className="text-xs font-semibold uppercase text-slate-400 tracking-wider mb-2">About Trainer</h4>
-              <p className="text-sm text-slate-300 leading-relaxed">{selectedTrainerModal.bio || 'Dedicated BodyFit personal transformation & strength coach.'}</p>
+              <p className="text-sm text-slate-300 leading-relaxed">{selectedTrainerModal.bio || 'Dedicated Gymnation personal transformation & strength coach.'}</p>
             </div>
 
             {/* Certifications */}
@@ -359,7 +359,7 @@ export default function Trainers({ onSelectTrainer }) {
                 ) : (
                   <li className="flex items-center gap-2 text-xs sm:text-sm text-slate-200">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                    <span>BodyFit Certified Fitness & Transformation Specialist</span>
+                    <span>Gymnation Certified Fitness & Transformation Specialist</span>
                   </li>
                 )}
               </ul>

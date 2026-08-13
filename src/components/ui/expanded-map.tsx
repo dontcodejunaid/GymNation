@@ -54,9 +54,9 @@ function formatCoordinates(lat: number, lng: number) {
 }
 
 export function LocationMap({
-  location = "Amrit Nagar, New Delhi",
-  latitude = 28.5684,
-  longitude = 77.2241,
+  location = "Shikaripalya, Electronic City",
+  latitude = 12.8360,
+  longitude = 77.6572,
   zoom = 14,
   className,
   defaultExpanded = false,
@@ -150,7 +150,7 @@ export function LocationMap({
     if (isExpanded) {
       // Third click / click while expanded in white mode -> redirect to Google Maps!
       window.open(
-        "https://maps.google.com/?q=D-20,+Amrit+Nagar,+Block+D,+New+Delhi,+Delhi+110049",
+        "https://maps.google.com/?q=Gymnation,+01,+Gollahalli+Main+Rd,+Shikaripalya,+Electronic+City,+Bengaluru,+Karnataka+560100",
         "_blank",
         "noopener,noreferrer"
       );

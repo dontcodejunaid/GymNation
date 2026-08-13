@@ -124,7 +124,7 @@ export default function MembershipsPanel({ signups, onChange }) {
       { key: 'source', label: 'Source' },
       { key: 'createdAt', label: 'Joined At' },
     ]);
-    downloadCsv(`bodyfit-memberships-${todayISO()}.csv`, csv);
+    downloadCsv(`gymnation-memberships-${todayISO()}.csv`, csv);
   };
 
   return (

@@ -53,7 +53,7 @@ export default function SectionHeader() {
 
       {/* Subtitle */}
       <p className="mt-4 text-base text-slate-400 sm:text-lg">
-        Join over 1,200+ members who transformed their lives at Body Fit Gym. Here is what they have to say about their journey.
+        Join over 1,200+ members who transformed their lives at Gymnation Gym. Here is what they have to say about their journey.
       </p>
 
       {/* Trust Badges Bar */}

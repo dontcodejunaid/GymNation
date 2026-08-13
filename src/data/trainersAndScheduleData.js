@@ -43,7 +43,7 @@ export const INITIAL_TRAINERS = [
     available: true,
     shiftHours: 'Morning (6 AM - 12 PM) & Evening (5 PM - 9 PM)',
     availableSlots: ['06:00 AM', '07:00 AM', '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM'],
-    instagram: '@vikram_bodyfit',
+    instagram: '@vikram_gymnation',
   },
   {
     id: 'tr-2',
@@ -160,7 +160,7 @@ export function getTrainerPhoto(trainerOrName, photoUrl) {
   if (firstName && map[firstName]) return map[firstName];
 
   try {
-    const stored = JSON.parse(localStorage.getItem('bodyfit_trainers') || '[]');
+    const stored = JSON.parse(localStorage.getItem('gymnation_trainers') || '[]');
     const initialList = Array.isArray(INITIAL_TRAINERS) ? INITIAL_TRAINERS : [];
     const all = [...initialList, ...stored];
     const match = all.find(t => t && t.name && t.name.toLowerCase().trim() === name.toLowerCase().trim());

@@ -291,7 +291,7 @@ const GalleryCard = memo(function GalleryCard({ item, index, onOpen }) {
         ) : (
           <img
             src={item.url}
-            alt={`${item.title} — ${item.category} area at BodyFit`}
+            alt={`${item.title} — ${item.category} area at Gymnation`}
             loading="lazy"
             decoding="async"
             fetchPriority="low"
@@ -444,7 +444,7 @@ export default function Gallery() {
         <div className="text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-orange-400 backdrop-blur-md">
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-            Inside Body Fit
+            Inside Gymnation
           </div>
           <h2 className="font-teko mt-3 text-4xl uppercase tracking-wide text-white sm:text-5xl lg:text-6xl">
             Our <span className="text-orange-500">Facility</span> Gallery
@@ -540,7 +540,7 @@ export default function Gallery() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.25 }}
                     src={activeItem.url}
-                    alt={`${activeItem.title} — ${activeItem.category} area at BodyFit`}
+                    alt={`${activeItem.title} — ${activeItem.category} area at Gymnation`}
                     onError={(e) => {
                       e.currentTarget.src = FALLBACK_IMAGE;
                     }}

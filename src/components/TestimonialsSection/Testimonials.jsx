@@ -64,7 +64,7 @@ export default function Testimonials() {
           xl:text-[200px]
           "
         >
-          BODYFIT
+          GYMNATION
         </h1>
       </div>
 

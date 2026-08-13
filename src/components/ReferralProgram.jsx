@@ -15,13 +15,13 @@ export default function ReferralProgram() {
   // Generate or load unique referral code
   useEffect(() => {
     try {
-      let code = localStorage.getItem('bodyfit_referral_code');
-      let count = localStorage.getItem('bodyfit_referral_count') || '0';
+      let code = localStorage.getItem('gymnation_referral_code');
+      let count = localStorage.getItem('gymnation_referral_count') || '0';
       
       if (!code) {
         const randomNum = Math.floor(1000 + Math.random() * 9000);
         code = `FITFREE-${randomNum}`;
-        localStorage.setItem('bodyfit_referral_code', code);
+        localStorage.setItem('gymnation_referral_code', code);
       }
       setUserCode(code);
       setReferralCount(parseInt(count, 10));
@@ -38,12 +38,12 @@ export default function ReferralProgram() {
       const newCode = `FIT-${cleanName || 'HERO'}-${Math.floor(100 + Math.random() * 900)}`;
       setUserCode(newCode);
       try {
-        localStorage.setItem('bodyfit_referral_code', newCode);
+        localStorage.setItem('gymnation_referral_code', newCode);
       } catch (err) {}
     }
   };
 
-  const shareText = `Hey! Join Body Fit Gym with my referral code ${userCode} & get 1 Month FREE on your annual membership. Sign up here: https://bodyfit.gym/book?ref=${userCode}`;
+  const shareText = `Hey! Join Gymnation Gym with my referral code ${userCode} & get 1 Month FREE on your annual membership. Sign up here: https://gymnation.gym/book?ref=${userCode}`;
   const whatsappUrl = `https://api.whatsapp.com/send?phone=&text=${encodeURIComponent(shareText)}`;
 
   const handleCopy = () => {
@@ -73,7 +73,7 @@ export default function ReferralProgram() {
           </h2>
           
           <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
-            Give your friends a <strong>1 Month Free Pass</strong> when they join Body Fit Gym. Every friend who registers unlocks 1 Month FREE extended to your membership!
+            Give your friends a <strong>1 Month Free Pass</strong> when they join Gymnation Gym. Every friend who registers unlocks 1 Month FREE extended to your membership!
           </p>
         </div>
 

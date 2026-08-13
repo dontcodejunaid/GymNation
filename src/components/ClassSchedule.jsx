@@ -23,13 +23,13 @@ export default function ClassSchedule({ onSelectClass }) {
   // Load schedule from LocalStorage & calculate real-time seat availability
   const loadSchedule = () => {
     try {
-      const saved = localStorage.getItem('bodyfit_classes');
-      const rawBookings = localStorage.getItem('bodyfit_bookings');
+      const saved = localStorage.getItem('gymnation_classes');
+      const rawBookings = localStorage.getItem('gymnation_bookings');
       const bookingsList = rawBookings ? JSON.parse(rawBookings) : [];
 
       let classesList = saved ? JSON.parse(saved) : INITIAL_SCHEDULE;
       if (!saved) {
-        localStorage.setItem('bodyfit_classes', JSON.stringify(INITIAL_SCHEDULE));
+        localStorage.setItem('gymnation_classes', JSON.stringify(INITIAL_SCHEDULE));
       }
 
       // Calculate real-time seat availability by matching confirmed bookings
@@ -54,7 +54,7 @@ export default function ClassSchedule({ onSelectClass }) {
 
       setSchedule(syncedSchedule);
     } catch (e) {
-      console.warn('LocalStorage error reading bodyfit_classes:', e);
+      console.warn('LocalStorage error reading gymnation_classes:', e);
       setSchedule(INITIAL_SCHEDULE);
     }
   };
@@ -64,12 +64,12 @@ export default function ClassSchedule({ onSelectClass }) {
 
     const handleUpdate = () => loadSchedule();
     window.addEventListener('storage', handleUpdate);
-    window.addEventListener('bodyfit-schedule-update', handleUpdate);
+    window.addEventListener('gymnation-schedule-update', handleUpdate);
     window.addEventListener('booking-created', handleUpdate);
 
     return () => {
       window.removeEventListener('storage', handleUpdate);
-      window.removeEventListener('bodyfit-schedule-update', handleUpdate);
+      window.removeEventListener('gymnation-schedule-update', handleUpdate);
       window.removeEventListener('booking-created', handleUpdate);
     };
   }, []);

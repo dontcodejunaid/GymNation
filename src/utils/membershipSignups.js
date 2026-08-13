@@ -3,16 +3,16 @@
 // Anyone who takes a membership — through the secure checkout modal or by
 // picking a plan and submitting the booking form — is written here. Each
 // signup lands in three places:
-//   localStorage['bodyfit_member_signups']  <- instant, offline-safe
+//   localStorage['gymnation_member_signups']  <- instant, offline-safe
 //   Firestore 'membershipSignups'           <- the owner's cloud database
-//   a 'bodyfit_memberships_signup' event    <- so an open admin tab refreshes
+//   a 'gymnation_memberships_signup' event    <- so an open admin tab refreshes
 //
 // The admin portal's Memberships tab reads all of them.
 
 import { addMemberSignup, getMemberSignups } from './adminStore';
 import { saveMembershipSignupToFirebase } from '../firebase';
 
-export const MEMBERSHIP_SIGNUP_EVENT = 'bodyfit_memberships_signup';
+export const MEMBERSHIP_SIGNUP_EVENT = 'gymnation_memberships_signup';
 
 // Picking a plan opens checkout *and* scrolls to the booking form, so one
 // person can trigger both paths. Within this window they count as one signup.
@@ -76,7 +76,7 @@ export function buildMembershipSignup({
     ? Number(pricing.totalAmount) || 0
     : parsePriceAmount(priceLabel);
 
-  const memberName = customer.name || 'BodyFit Member';
+  const memberName = customer.name || 'Gymnation Member';
   const id = newMemberId(memberName);
 
   return {
@@ -89,7 +89,7 @@ export function buildMembershipSignup({
 
     // Plan
     planId: plan.id || plan.docId || '',
-    planName: plan.name || 'BodyFit Membership',
+    planName: plan.name || 'Gymnation Membership',
     planTier: plan.tier || '',
     billingCycle,
     priceLabel,

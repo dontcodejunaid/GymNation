@@ -9,7 +9,7 @@ const ARTICLES = [
     title: 'Calorie Deficit 101: How Fat Loss Actually Works',
     readTime: '4 min read',
     summary: 'Understand the fundamental physics of fat loss without falling for extreme crash diets or restrictive fads.',
-    author: 'BodyFit Nutrition Team',
+    author: 'Gymnation Nutrition Team',
     date: 'August 2026',
     icon: Flame,
     content: `
@@ -38,7 +38,7 @@ const ARTICLES = [
     title: 'Top Protein Foods for Maximum Muscle Hypertrophy',
     readTime: '5 min read',
     summary: 'A complete breakdown of high-protein Indian and global food options for both Veg and Non-Veg lifters.',
-    author: 'BodyFit Head Coach',
+    author: 'Gymnation Head Coach',
     date: 'August 2026',
     icon: Utensils,
     content: `
@@ -84,7 +84,7 @@ const ARTICLES = [
     title: 'Hydration & Electrolytes: The Forgotten Growth Factor',
     readTime: '3 min read',
     summary: 'Why losing even 2% of body water drops strength levels by 15%, and how to hydrate effectively.',
-    author: 'BodyFit Recovery Specialist',
+    author: 'Gymnation Recovery Specialist',
     date: 'August 2026',
     icon: Dumbbell,
     content: `
@@ -122,7 +122,7 @@ export default function NutritionHubModal({ isOpen, onClose }) {
         {/* Top Navigation Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <img src={logoImg} alt="BodyFit Logo" className="h-9 w-auto" />
+            <img src={logoImg} alt="Gymnation Logo" className="h-9 w-auto" />
             <div>
               <div className="flex items-center gap-2">
                 {/* White Scale TIPS Badge */}
@@ -257,7 +257,7 @@ export default function NutritionHubModal({ isOpen, onClose }) {
         {/* Modal Footer */}
         <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0">
           <span className="text-xs text-slate-400 font-semibold">
-            Need customized dietary consulting? Visit our trainers at BodyFit.
+            Need customized dietary consulting? Visit our trainers at Gymnation.
           </span>
           <button
             type="button"

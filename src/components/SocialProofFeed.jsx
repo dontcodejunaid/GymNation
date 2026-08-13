@@ -25,7 +25,7 @@ const googleReviews = [
     avatar: 'A',
     time: '2 weeks ago',
     rating: 5,
-    text: 'Best gym in South Delhi! The trainers in Amrit Nagar branch genuinely pay attention to your form during heavy lifts. Equipment is always clean and functional.',
+    text: 'Best gym in Electronic City! The trainers at the Shikaripalya branch genuinely pay attention to your form during heavy lifts. Equipment is always clean and functional.',
     verified: true
   },
   {
@@ -52,7 +52,7 @@ const instagramPosts = [
     imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500&auto=format&fit=crop&q=80',
     likes: '482',
     comments: '34',
-    caption: 'Monday Motivation: Heavy Olympic squad session on the turf floor! 🔥 #BodyFitDelhi #NoExcuses'
+    caption: 'Monday Motivation: Heavy Olympic squad session on the turf floor! 🔥 #GymnationElectronicCity #NoExcuses'
   },
   {
     id: 2,
@@ -121,13 +121,13 @@ export default function SocialProofFeed() {
                   </div>
                 </div>
                 <p className="text-xs text-slate-400 font-semibold">
-                  Based on 350+ Verified Google Reviews • Amrit Nagar, South Delhi
+                  Based on 350+ Verified Google Reviews • Shikaripalya, Electronic City
                 </p>
               </div>
             </div>
 
             <a
-              href="https://maps.google.com/?q=D-20,+Amrit+Nagar,+Block+D,+New+Delhi,+Delhi+110049"
+              href="https://maps.google.com/?q=Gymnation,+01,+Gollahalli+Main+Rd,+Shikaripalya,+Electronic+City,+Bengaluru,+Karnataka+560100"
               target="_blank"
               rel="noopener noreferrer"
               className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-2 transition-colors border border-slate-700 shrink-0"
@@ -183,7 +183,7 @@ export default function SocialProofFeed() {
                 <InstagramIcon className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-white">@bodyfit_delhi</h3>
+                <h3 className="text-xl font-black text-white">@gymnation_ecity</h3>
                 <p className="text-xs text-slate-400">Follow us on Instagram for daily workout reels & tips</p>
               </div>
             </div>

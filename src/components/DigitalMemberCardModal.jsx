@@ -4,6 +4,7 @@ import { jsPDF } from 'jspdf';
 import { X, QrCode, ShieldCheck, Download, Calendar, MapPin, Sparkles, User, Dumbbell, Layers } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 import { generateStaticToken } from '../services/qrEngine';
+import { withPassPrefix } from '../utils/passId';
 
 export default function DigitalMemberCardModal({ memberData, isOpen, onClose, onOpenRecovery }) {
   const cardRef = useRef(null);
@@ -16,13 +17,13 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
       list = memberData.passes;
     } else {
       const rawPayId = String(memberData.paymentResult?.paymentId || '2026-8492');
-      const cleanPayId = (rawPayId.startsWith('BF-') ? rawPayId : `BF-${rawPayId}`).toUpperCase();
+      const cleanPayId = withPassPrefix(rawPayId).toUpperCase();
 
       list = [
         {
           id: cleanPayId,
           service: String(memberData.plan?.name || 'Standard Membership'),
-          name: String(memberData.customer?.name || 'BodyFit Member'),
+          name: String(memberData.customer?.name || 'Gymnation Member'),
           date: memberData.date || 'Active',
           time: memberData.time || '',
           trainer: memberData.trainer || '',
@@ -35,7 +36,7 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
     const seen = new Set();
     return list.map((p) => ({
       ...p,
-      id: (String(p.id).startsWith('BF-') ? String(p.id) : `BF-${p.id}`).toUpperCase()
+      id: withPassPrefix(String(p.id)).toUpperCase()
     })).filter((p) => {
       const key = `${p.id}_${p.service || ''}`.toLowerCase();
       if (seen.has(key)) return false;
@@ -49,11 +50,11 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
   const activeIndex = selectedPassIndex < passesList.length ? selectedPassIndex : 0;
   const currentPass = passesList[activeIndex] || passesList[0];
 
-  const memberName = String(currentPass.name || currentPass.customerName || memberData.customer?.name || 'BodyFit Member');
+  const memberName = String(currentPass.name || currentPass.customerName || memberData.customer?.name || 'Gymnation Member');
   const memberPhone = String(memberData.customer?.phone || '+91 98765 43210');
   const planName = String(currentPass.service || 'Standard Membership');
-  const rawPassId = String(currentPass.id || 'BF-84920194');
-  const passId = (rawPassId.startsWith('BF-') ? rawPassId : `BF-${rawPassId}`).toUpperCase();
+  const rawPassId = String(currentPass.id || 'GN-84920194');
+  const passId = withPassPrefix(rawPassId).toUpperCase();
   
   // Expiry date calculation (1 month or 1 year)
   const validUntilDate = new Date();
@@ -87,7 +88,7 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('BODYFIT', 42.8, 14, { align: 'center' });
+      doc.text('GYMNATION', 42.8, 14, { align: 'center' });
 
       doc.setFontSize(8);
       doc.setTextColor(249, 115, 22);
@@ -115,7 +116,7 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
       doc.roundedRect(17.8, 49, 50, 50, 3, 3, 'F');
 
       // Draw QR Code SVG onto canvas -> PDF
-      const qrSvgElement = document.querySelector('.bodyfit-qr-container svg');
+      const qrSvgElement = document.querySelector('.gymnation-qr-container svg');
       if (qrSvgElement) {
         const xml = new XMLSerializer().serializeToString(qrSvgElement);
         const svg64 = btoa(unescape(encodeURIComponent(xml)));
@@ -141,10 +142,10 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
           doc.text(`STATIC PASS TOKEN: ${staticQrPayload}`, 42.8, 104, { align: 'center' });
           doc.text('SCAN AT GYM TURNSTILE FOR ENTRY • AMRIT NAGAR BRANCH', 42.8, 108, { align: 'center' });
 
-          doc.save(`BodyFit_Pass_${passId}.pdf`);
+          doc.save(`Gymnation_Pass_${passId}.pdf`);
         };
       } else {
-        doc.save(`BodyFit_Pass_${passId}.pdf`);
+        doc.save(`Gymnation_Pass_${passId}.pdf`);
       }
 
     } catch (err) {
@@ -213,10 +214,10 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
           {/* Card Header: Brand Logo & Status */}
           <div className="flex items-center justify-between relative z-10">
             <div className="flex items-center gap-2.5">
-              <img src={logoImg} alt="BodyFit" className="w-9 h-9 object-contain" />
+              <img src={logoImg} alt="Gymnation" className="w-9 h-9 object-contain" />
               <div>
                 <span className="text-base font-black tracking-wider uppercase text-white block leading-none">
-                  BODYFIT
+                  GYMNATION
                 </span>
                 <span className="text-[10px] text-orange-400 font-bold uppercase tracking-widest">
                   Fitness Centre
@@ -272,7 +273,7 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
           </div>
 
           {/* Real SVG QR Code for Turnstile Check-In */}
-          <div className="relative z-10 p-5 rounded-2xl bg-white/95 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-slate-950 shadow-xl bodyfit-qr-container">
+          <div className="relative z-10 p-5 rounded-2xl bg-white/95 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-slate-950 shadow-xl gymnation-qr-container">
             <QRCodeSVG 
               value={staticQrPayload} 
               size={144} 

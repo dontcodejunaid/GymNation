@@ -20,7 +20,7 @@ export default function TestimonialsCTA() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        aria-label="Join BodyFit call to action"
+        aria-label="Join Gymnation call to action"
         className="
           relative
           overflow-hidden

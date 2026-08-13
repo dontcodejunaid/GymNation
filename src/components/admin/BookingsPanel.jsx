@@ -121,7 +121,7 @@ export default function BookingsPanel({ bookings, onChange }) {
       { key: 'status', label: 'Status' },
       { key: 'createdAt', label: 'Created At' },
     ]);
-    downloadCsv(`bodyfit-bookings-${todayISO()}.csv`, csv);
+    downloadCsv(`gymnation-bookings-${todayISO()}.csv`, csv);
   };
 
   return (

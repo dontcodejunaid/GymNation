@@ -2,7 +2,7 @@
  * Internal Lightweight Analytics & Conversion Tracker
  */
 
-const ANALYTICS_KEY = 'bodyfit_analytics_v1';
+const ANALYTICS_KEY = 'gymnation_analytics_v1';
 
 function getStoredAnalytics() {
   try {
@@ -71,15 +71,15 @@ export function getAnalyticsSummary() {
 
   // Seed sample Active Paid Members
   const activePaidMembers = [
-    { name: 'Ananya Mehra', phone: '+91 98765 11223', plan: 'Standard (Gym + Classes)', amount: '₹2,500/mo', passId: 'BF-9842XJ', status: 'ACTIVE' },
-    { name: 'Vikram Nair', phone: '+91 98987 65432', plan: 'Premium (Gym + PT + Diet)', amount: '₹4,500/mo', passId: 'BF-7731AB', status: 'ACTIVE' },
-    { name: 'Sana Qureshi', phone: '+91 97654 32109', plan: 'Standard (Gym + Classes)', amount: '₹2,500/mo', passId: 'BF-5542KL', status: 'ACTIVE' },
-    { name: 'Rohan Gupta', phone: '+91 98222 33445', plan: 'Basic (Gym Only)', amount: '₹1,500/mo', passId: 'BF-1129OP', status: 'ACTIVE' }
+    { name: 'Ananya Mehra', phone: '+91 98765 11223', plan: 'Standard (Gym + Classes)', amount: '₹2,500/mo', passId: 'GN-9842XJ', status: 'ACTIVE' },
+    { name: 'Vikram Nair', phone: '+91 98987 65432', plan: 'Premium (Gym + PT + Diet)', amount: '₹4,500/mo', passId: 'GN-7731AB', status: 'ACTIVE' },
+    { name: 'Sana Qureshi', phone: '+91 97654 32109', plan: 'Standard (Gym + Classes)', amount: '₹2,500/mo', passId: 'GN-5542KL', status: 'ACTIVE' },
+    { name: 'Rohan Gupta', phone: '+91 98222 33445', plan: 'Basic (Gym Only)', amount: '₹1,500/mo', passId: 'GN-1129OP', status: 'ACTIVE' }
   ];
 
   // Include user's live active pass if generated
   try {
-    const livePass = localStorage.getItem('bodyfit_member_pass');
+    const livePass = localStorage.getItem('gymnation_member_pass');
     if (livePass) {
       const parsed = JSON.parse(livePass);
       if (parsed.customer && parsed.customer.name) {
@@ -88,7 +88,7 @@ export function getAnalyticsSummary() {
           phone: parsed.customer.phone || '+91 98765 00000',
           plan: parsed.plan?.name || 'Standard Membership',
           amount: `₹${parsed.pricing?.totalAmount || '2,625'}`,
-          passId: parsed.paymentResult?.paymentId ? `BF-${parsed.paymentResult.paymentId.slice(-6).toUpperCase()}` : 'BF-LIVE01',
+          passId: parsed.paymentResult?.paymentId ? `GN-${parsed.paymentResult.paymentId.slice(-6).toUpperCase()}` : 'GN-LIVE01',
           status: 'ACTIVE (LIVE)'
         });
       }

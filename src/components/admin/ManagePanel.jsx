@@ -277,15 +277,15 @@ export default function ManagePanel() {
     };
 
     window.addEventListener('storage', handleSync);
-    window.addEventListener('bodyfit-schedule-update', handleSync);
-    window.addEventListener('bodyfit-trainers-update', handleSync);
-    window.addEventListener('bodyfit-memberships-update', handleSync);
+    window.addEventListener('gymnation-schedule-update', handleSync);
+    window.addEventListener('gymnation-trainers-update', handleSync);
+    window.addEventListener('gymnation-memberships-update', handleSync);
 
     return () => {
       window.removeEventListener('storage', handleSync);
-      window.removeEventListener('bodyfit-schedule-update', handleSync);
-      window.removeEventListener('bodyfit-trainers-update', handleSync);
-      window.removeEventListener('bodyfit-memberships-update', handleSync);
+      window.removeEventListener('gymnation-schedule-update', handleSync);
+      window.removeEventListener('gymnation-trainers-update', handleSync);
+      window.removeEventListener('gymnation-memberships-update', handleSync);
     };
   }, [active]);
 
@@ -412,7 +412,7 @@ export default function ManagePanel() {
         const fullySynced = await syncAllTrainersToFirebase(initialNext);
         saveTrainers(fullySynced);
         setRows(fullySynced);
-        window.dispatchEvent(new Event('bodyfit_trainers_updated'));
+        window.dispatchEvent(new Event('gymnation_trainers_updated'));
       } catch (err) {
         console.error('Failed to sync trainer with Firebase:', err);
         const next =
@@ -438,7 +438,7 @@ export default function ManagePanel() {
         const fullySynced = await syncAllMembershipsToFirebase(initialNext);
         saveMemberships(fullySynced);
         setRows(fullySynced);
-        window.dispatchEvent(new Event('bodyfit_memberships_updated'));
+        window.dispatchEvent(new Event('gymnation_memberships_updated'));
       } catch (err) {
         console.error('Failed to sync membership plan with Firebase:', err);
         const next =
@@ -482,7 +482,7 @@ export default function ManagePanel() {
           });
           saveTrainers(next);
           setRows(next);
-          window.dispatchEvent(new Event('bodyfit_trainers_updated'));
+          window.dispatchEvent(new Event('gymnation_trainers_updated'));
         } catch (err) {
           console.error('Failed to delete trainer from Firebase:', err);
           const next = rows.filter((item) => item.id !== row.id);
@@ -495,7 +495,7 @@ export default function ManagePanel() {
           const next = rows.filter((item) => (item.docId || item.id) !== (row.docId || row.id));
           saveMemberships(next);
           setRows(next);
-          window.dispatchEvent(new Event('bodyfit_memberships_updated'));
+          window.dispatchEvent(new Event('gymnation_memberships_updated'));
         } catch (err) {
           console.error('Failed to delete membership plan from Firebase:', err);
           const next = rows.filter((item) => item.id !== row.id);
@@ -519,7 +519,7 @@ export default function ManagePanel() {
       const synced = await syncAllTrainersToFirebase(rows);
       saveTrainers(synced);
       setRows(synced);
-      window.dispatchEvent(new Event('bodyfit_trainers_updated'));
+      window.dispatchEvent(new Event('gymnation_trainers_updated'));
       alert('✅ All existing and new trainers have been successfully synced to Google Firebase Firestore!');
     } catch (e) {
       console.error('Failed to sync trainers to Firebase:', e);
@@ -534,7 +534,7 @@ export default function ManagePanel() {
       const synced = await syncAllMembershipsToFirebase(rows);
       saveMemberships(synced);
       setRows(synced);
-      window.dispatchEvent(new Event('bodyfit_memberships_updated'));
+      window.dispatchEvent(new Event('gymnation_memberships_updated'));
       alert('✅ All existing and new membership plans have been successfully synced to Google Firebase Firestore!');
     } catch (e) {
       console.error('Failed to sync memberships to Firebase:', e);

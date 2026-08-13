@@ -1,4 +1,4 @@
-// WhatsApp Integration Helper for BodyFit
+// WhatsApp Integration Helper for Gymnation
 // Configure the destination number via VITE_WHATSAPP_NUMBER (digits only, including country code).
 
 export class WhatsAppConfig {
@@ -7,7 +7,7 @@ export class WhatsAppConfig {
     if (envNum && envNum.trim()) {
       return envNum.replace(/\D/g, '');
     }
-    return '919620996689'; // Default fallback testing number
+    return '919742041444'; // Gymnation front desk
   }
 }
 
@@ -37,7 +37,7 @@ export function sendWhatsAppBookingAlert(bookingDetails, targetPhone = null) {
     ? formatWhatsAppNumber(targetPhone) 
     : WhatsAppConfig.ActiveNumber;
 
-  const textMessage = `🏋️ *NEW BODYFIT BOOKING REQUEST* 🏋️\n\n` +
+  const textMessage = `🏋️ *NEW GYMNATION BOOKING REQUEST* 🏋️\n\n` +
     `📌 *Booking Ref:* #${id}\n` +
     `👤 *Client Name:* ${name}\n` +
     `📞 *Phone Number:* ${phone}\n` +

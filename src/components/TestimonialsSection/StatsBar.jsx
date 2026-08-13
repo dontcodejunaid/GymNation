@@ -128,7 +128,7 @@ function Metric({ item, index }) {
 export default function StatsBar() {
   return (
     <section
-      aria-label="BodyFit Community Statistics"
+      aria-label="Gymnation Community Statistics"
       className="w-full"
     >
       <motion.div

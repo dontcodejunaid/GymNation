@@ -32,7 +32,7 @@ const ADMINS = [
   },
 ];
 
-const SESSION_KEY = 'bodyfit_admin_session';
+const SESSION_KEY = 'gymnation_admin_session';
 
 /**
  * @returns {{ ok: boolean, error?: string }}

@@ -1,7 +1,9 @@
 /**
- * Modular Payment Gateway System for BodyFit
+ * Modular Payment Gateway System for Gymnation
  * Designed to easily support Razorpay, PhonePe, Paytm, Stripe, or Direct UPI.
  */
+
+import { SESSION_PREFIX, hasSessionPrefix } from './passId';
 
 export const GST_RATE = 0.05; // 5% GST as requested
 
@@ -27,7 +29,7 @@ export const PAYMENT_PROVIDERS = {
 export function createPaymentSessionToken(planId, amount) {
   const timestamp = Date.now();
   const randomSalt = Math.random().toString(36).substring(2, 9);
-  return `BF-SESS-${timestamp}-${randomSalt}-${btoa(planId).slice(0, 6)}`;
+  return `${SESSION_PREFIX}${timestamp}-${randomSalt}-${btoa(planId).slice(0, 6)}`;
 }
 
 /**
@@ -70,7 +72,7 @@ export async function initiatePayment({
   onStatusChange(PAYMENT_STATUS.PENDING);
 
   // Security check: Verify session token exists
-  if (!sessionToken || !sessionToken.startsWith('BF-SESS-')) {
+  if (!hasSessionPrefix(sessionToken)) {
     onStatusChange(PAYMENT_STATUS.FAILED);
     if (onFailure) onFailure(new Error('Invalid or expired payment session token. Access denied.'));
     return;
@@ -105,7 +107,7 @@ async function processRazorpayGateway({ plan, customer, pricing, sessionToken, o
         key: window.RAZORPAY_KEY_ID,
         amount: pricing.totalAmount * 100, // Amount in paise
         currency: 'INR',
-        name: 'BodyFit Fitness Centre',
+        name: 'Gymnation Fitness Centre',
         description: `${plan.name} Membership`,
         image: '/assets/logo.png',
         handler: function (response) {
@@ -178,7 +180,7 @@ async function processMockGateway({ plan, customer, pricing, sessionToken, onSuc
     const result = {
       paymentId: `pay_mock_${Math.random().toString(36).substring(2, 10)}`,
       sessionToken,
-      provider: 'BodyFit Sandbox Gateway',
+      provider: 'Gymnation Sandbox Gateway',
       amountPaid: pricing.totalAmount,
       timestamp: new Date().toISOString()
     };

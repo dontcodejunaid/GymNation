@@ -32,7 +32,7 @@ export default function RandomLetterSwapNav({ onOpenRecovery }) {
   const [activeSection, setActiveSection] = useState("#home");
 
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${WhatsAppConfig.ActiveNumber}&text=${encodeURIComponent(
-    "Hi Body Fit! I'd like to know more about your memberships."
+    "Hi Gymnation! I'd like to know more about your memberships."
   )}`;
 
   useEffect(() => {
@@ -102,9 +102,9 @@ export default function RandomLetterSwapNav({ onOpenRecovery }) {
           href="/home"
           onClick={(event) => goTo(event, "/home")}
         >
-          <img alt="Body Fit" className="h-12 sm:h-14 w-auto transition-transform duration-300 hover:scale-105" src={logoImg} />
+          <img alt="Gymnation" className="h-12 sm:h-14 w-auto transition-transform duration-300 hover:scale-105" src={logoImg} />
           <span className="font-teko text-3xl sm:text-4xl leading-none tracking-wide text-white">
-            BODY<span className="text-orange-500">FIT</span>
+            GYM<span className="text-orange-500">NATION</span>
           </span>
         </a>
 
@@ -164,9 +164,9 @@ export default function RandomLetterSwapNav({ onOpenRecovery }) {
 
           {/* Caller Button */}
           <a
-            aria-label="Call Bodyfit Gym"
+            aria-label="Call Gymnation Gym"
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 transition-all duration-300 hover:border-orange-500/50 hover:bg-orange-500 hover:text-white hover:shadow-[0_0_20px_rgba(249,115,22,0.6)] active:scale-95"
-            href="tel:+919620996689"
+            href="tel:+919742041444"
           >
             <Phone className="h-[18px] w-[18px]" />
           </a>

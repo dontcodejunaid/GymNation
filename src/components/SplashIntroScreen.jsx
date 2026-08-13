@@ -35,7 +35,7 @@ export default function SplashIntroScreen({ onFinish }) {
         <div className="relative transform transition-all duration-1000 animate-pulse flex items-center justify-center">
           <img
             src={faviconImg}
-            alt="BODYFIT Logo"
+            alt="GYMNATION Logo"
             className="h-52 sm:h-72 md:h-80 w-auto max-w-[85vw] object-contain drop-shadow-[0_0_50px_rgba(249,115,22,0.9)]"
             onError={(e) => {
               e.target.src = logoImg;

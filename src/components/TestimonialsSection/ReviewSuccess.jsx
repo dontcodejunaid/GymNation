@@ -39,7 +39,7 @@ export default function ReviewSuccess({ onClose }) {
 
         <p className="mx-auto max-w-md text-sm leading-7 text-slate-400">
           Your transformation story has been successfully submitted.
-          Our BodyFit team will review your testimonial before it is
+          Our Gymnation team will review your testimonial before it is
           published on the website.
         </p>
       </div>
@@ -63,7 +63,7 @@ export default function ReviewSuccess({ onClose }) {
             </span>
 
             <span className="font-semibold text-white">
-              BodyFit Admin
+              Gymnation Admin
             </span>
           </div>
 

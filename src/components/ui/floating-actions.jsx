@@ -25,7 +25,7 @@ export default function FloatingActions({ activeMemberPass, onOpenPass, onOpenRe
       setSavedPass(activeMemberPass);
     } else {
       try {
-        const stored = localStorage.getItem('bodyfit_member_pass');
+        const stored = localStorage.getItem('gymnation_member_pass');
         if (stored) setSavedPass(JSON.parse(stored));
         else setSavedPass(null);
       } catch (e) {

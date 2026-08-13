@@ -35,8 +35,8 @@ export default function ClassRosterModal({ isOpen, onClose, classItem }) {
             const key = `${b.phone || b.name || ''}_${b.date || ''}_${b.time || ''}`;
             if (!uniqueMap.has(key)) {
               uniqueMap.set(key, {
-                id: b.id || `BF-${Math.floor(10000 + Math.random() * 90000)}`,
-                name: b.name || 'BodyFit Member',
+                id: b.id || `GN-${Math.floor(10000 + Math.random() * 90000)}`,
+                name: b.name || 'Gymnation Member',
                 phone: b.phone || 'N/A',
                 email: b.email || '',
                 date: b.date || classItem.day || 'Scheduled',
@@ -61,12 +61,12 @@ export default function ClassRosterModal({ isOpen, onClose, classItem }) {
     // Listen for real-time booking updates
     const handleUpdate = () => fetchRoster();
     window.addEventListener('storage', handleUpdate);
-    window.addEventListener('bodyfit-schedule-update', handleUpdate);
+    window.addEventListener('gymnation-schedule-update', handleUpdate);
     window.addEventListener('booking-created', handleUpdate);
 
     return () => {
       window.removeEventListener('storage', handleUpdate);
-      window.removeEventListener('bodyfit-schedule-update', handleUpdate);
+      window.removeEventListener('gymnation-schedule-update', handleUpdate);
       window.removeEventListener('booking-created', handleUpdate);
     };
   }, [isOpen, classItem]);
@@ -197,7 +197,7 @@ export default function ClassRosterModal({ isOpen, onClose, classItem }) {
                   {/* Actions */}
                   <div className="flex items-center gap-2">
                     <a
-                      href={`https://wa.me/${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${member.name}! We look forward to seeing you at ${classItem.className} (${classItem.day} ${classItem.time}) at BodyFit.`)}`}
+                      href={`https://wa.me/${member.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${member.name}! We look forward to seeing you at ${classItem.className} (${classItem.day} ${classItem.time}) at Gymnation.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-bold transition-all"

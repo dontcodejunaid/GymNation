@@ -70,11 +70,11 @@ export function buildCalendarInvite(booking) {
   if (!start) return null;
 
   const end = new Date(start.getTime() + 60 * 60 * 1000);
-  const summary = `Body Fit — ${booking.service || 'Session'}`;
+  const summary = `Gymnation — ${booking.service || 'Session'}`;
   const description = [
     `Booking Ref: ${booking.id}`,
     booking.trainer ? `Trainer: ${booking.trainer}` : '',
-    'Body Fit Fitness Centre',
+    'Gymnation Fitness Centre',
   ]
     .filter(Boolean)
     .join('\n');
@@ -83,21 +83,21 @@ export function buildCalendarInvite(booking) {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Body Fit Fitness Centre//Booking//EN',
+    'PRODID:-//Gymnation Fitness Centre//Booking//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${booking.id}@bodyfit`,
+    `UID:${booking.id}@gymnation`,
     `DTSTAMP:${toIcsStamp(new Date())}`,
     `DTSTART:${toIcsStamp(start)}`,
     `DTEND:${toIcsStamp(end)}`,
     `SUMMARY:${escapeIcs(summary)}`,
     `DESCRIPTION:${escapeIcs(description)}`,
-    'LOCATION:D-20\\, Amrit Nagar\\, Block D\\, New Delhi\\, Delhi 110049',
+    'LOCATION:01\\, Gollahalli Main Rd\\, Shikaripalya\\, Electronic City\\, Bengaluru\\, Karnataka 560100',
     'BEGIN:VALARM',
     'TRIGGER:-PT1H',
     'ACTION:DISPLAY',
-    'DESCRIPTION:Your Body Fit session starts in 1 hour',
+    'DESCRIPTION:Your Gymnation session starts in 1 hour',
     'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
@@ -114,11 +114,11 @@ export function openGoogleCalendar(booking) {
     return date.toISOString().replace(/-|:|\.\d\d\d/g, '');
   };
 
-  const title = encodeURIComponent(`Body Fit — ${booking.service || 'Fitness Session'}`);
+  const title = encodeURIComponent(`Gymnation — ${booking.service || 'Fitness Session'}`);
   const details = encodeURIComponent(
-    `Booking Ref: #${booking.id}\nMember: ${booking.name}\nTrainer: ${booking.trainer || 'Duty Coach'}\nLocation: Body Fit Gym, Amrit Nagar, New Delhi`
+    `Booking Ref: #${booking.id}\nMember: ${booking.name}\nTrainer: ${booking.trainer || 'Duty Coach'}\nLocation: Gymnation Gym, Shikaripalya, Electronic City`
   );
-  const location = encodeURIComponent('Body Fit Gym, D-20, Amrit Nagar, Block D, New Delhi, Delhi 110049');
+  const location = encodeURIComponent('Gymnation Gym, 01, Gollahalli Main Rd, Shikaripalya, Electronic City, Bengaluru, Karnataka 560100');
   const dates = `${formatGCal(start)}/${formatGCal(end)}`;
 
   const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
@@ -135,7 +135,7 @@ export function downloadCalendarInvite(booking) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `bodyfit-${booking.id}.ics`;
+  link.download = `gymnation-${booking.id}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -165,7 +165,7 @@ export async function scheduleBrowserReminder(booking) {
   if (permission !== 'granted') return { scheduled: false, reason: 'denied' };
 
   setTimeout(() => {
-    new Notification('Body Fit — session in 1 hour', {
+    new Notification('Gymnation — session in 1 hour', {
       body: `${booking.service} at ${booking.time}${booking.trainer ? ` with ${booking.trainer}` : ''}`,
     });
   }, delay);
@@ -196,7 +196,7 @@ export async function sendEmailConfirmation(booking) {
         template_params: {
           from_email: SENDER_EMAIL,
           reply_to: booking.email,
-          from_name: 'BodyFit Fitness',
+          from_name: 'Gymnation Fitness',
           to_email: booking.email,
           to_name: booking.name,
           booking_ref: booking.id,
@@ -237,11 +237,11 @@ export async function sendNewsletterSubscriptionEmail(subscriberEmail) {
           template_params: {
             from_email: SENDER_EMAIL,
             reply_to: cleanEmail,
-            from_name: 'BodyFit Fitness',
+            from_name: 'Gymnation Fitness',
             to_email: cleanEmail,
             email: cleanEmail,
             to_name: cleanEmail.split('@')[0],
-            subject: 'Welcome to BodyFit Offers & Updates!',
+            subject: 'Welcome to Gymnation Offers & Updates!',
             message: 'Thank you for subscribing! You will receive exclusive membership offers, new class drops, and transformation challenges directly in your inbox.',
           },
         }),
@@ -255,7 +255,59 @@ export async function sendNewsletterSubscriptionEmail(subscriberEmail) {
     }
   }
 
-  console.info(`📧 [BodyFit Subscription Email Delivered via ${SENDER_EMAIL}] To: ${cleanEmail} | "Thank you for subscribing! You will receive updates."`);
+  console.info(`📧 [Gymnation Subscription Email Delivered via ${SENDER_EMAIL}] To: ${cleanEmail} | "Thank you for subscribing! You will receive updates."`);
+  return { sent: true, mode: 'simulated' };
+}
+
+/**
+ * Sends one membership-expiry reminder (the 5 / 3 / 1 day nudge).
+ *
+ * Falls back to a console line when EmailJS is unconfigured, matching the
+ * newsletter sender — so the Renewals panel still demos end to end on a fresh
+ * checkout with no .env, and reports which mode it used.
+ */
+export async function sendMembershipExpiryEmail(signup, milestone) {
+  if (!signup?.email) return { sent: false, reason: 'no-email' };
+
+  const { buildExpirySubject, buildExpiryBody } = await import('./membershipExpiry');
+  const subject = buildExpirySubject(signup, milestone);
+  const message = buildExpiryBody(signup, milestone);
+  const toEmail = String(signup.email).trim().toLowerCase();
+
+  if (emailConfigured) {
+    try {
+      const response = await fetch(EMAILJS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_id: env.VITE_EMAILJS_SERVICE_ID,
+          template_id: env.VITE_EMAILJS_EXPIRY_TEMPLATE_ID || env.VITE_EMAILJS_TEMPLATE_ID,
+          user_id: env.VITE_EMAILJS_PUBLIC_KEY,
+          template_params: {
+            from_email: SENDER_EMAIL,
+            reply_to: SENDER_EMAIL,
+            from_name: 'Gymnation Fitness',
+            to_email: toEmail,
+            email: toEmail,
+            to_name: signup.memberName || 'Gymnation Member',
+            subject,
+            message,
+            plan_name: signup.planName || '',
+            end_date: signup.endDate || '',
+            days_left: String(milestone),
+          },
+        }),
+      });
+
+      if (response.ok) return { sent: true, mode: 'emailjs' };
+      return { sent: false, reason: `http-${response.status}` };
+    } catch (error) {
+      console.warn('EmailJS expiry reminder failed:', error);
+      return { sent: false, reason: 'network' };
+    }
+  }
+
+  console.info(`📧 [Gymnation expiry reminder — simulated] To: ${toEmail}\nSubject: ${subject}\n\n${message}`);
   return { sent: true, mode: 'simulated' };
 }
 
@@ -274,7 +326,7 @@ export async function sendSmsConfirmation(booking) {
       body: JSON.stringify({
         phone: booking.phone,
         message:
-          `Body Fit: Booking ${booking.id} confirmed for ${booking.service} on ` +
+          `Gymnation: Booking ${booking.id} confirmed for ${booking.service} on ` +
           `${booking.date} at ${booking.time}. See you there!`,
       }),
     });

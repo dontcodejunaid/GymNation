@@ -27,7 +27,7 @@ const socials = [
   },
   {
     label: 'WhatsApp',
-    href: 'https://api.whatsapp.com/send?phone=919620996689&text=Hi%20BodyFit!%20I%20would%20like%20to%20know%20more.',
+    href: 'https://api.whatsapp.com/send?phone=919742041444&text=Hi%20Gymnation!%20I%20would%20like%20to%20know%20more.',
     Icon: WhatsAppIcon,
     hover: 'hover:bg-[#25D366] hover:border-transparent',
   },
@@ -97,13 +97,13 @@ export default function Footer() {
           {/* Brand + socials */}
           <div className="lg:col-span-4">
             <div className="flex items-center gap-3">
-              <img alt="Body Fit" className="h-11 w-auto" src={logoImg} />
+              <img alt="Gymnation" className="h-11 w-auto" src={logoImg} />
               <span className="font-teko text-3xl leading-none tracking-wide text-white">
-                BODY<span className="text-orange-500">FIT</span>
+                GYM<span className="text-orange-500">NATION</span>
               </span>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-400">
-              South Delhi&apos;s trusted fitness centre since 2016. Elite equipment, certified
+              Electronic City&apos;s trusted fitness centre since 2016. Elite equipment, certified
               coaches, and a community that shows up every single day.
             </p>
 
@@ -149,13 +149,13 @@ export default function Footer() {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" />
                 <a
                   className="text-slate-400 transition-colors hover:text-orange-400"
-                  href="https://maps.google.com/?q=D-20,+Amrit+Nagar,+Block+D,+New+Delhi,+Delhi+110049"
+                  href="https://maps.google.com/?q=Gymnation,+01,+Gollahalli+Main+Rd,+Shikaripalya,+Electronic+City,+Bengaluru,+Karnataka+560100"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
-                  D-20, Amrit Nagar, Block D,
+                  01, Gollahalli Main Rd, Shikaripalya,
                   <br />
-                  New Delhi, Delhi 110049
+                  Electronic City, Bengaluru, Karnataka 560100
                 </a>
               </li>
               <li className="flex items-start gap-3">
@@ -183,7 +183,7 @@ export default function Footer() {
             </ul>
 
             {/* Expanded Location Map just below Visit Us section */}
-            <LocationMap location="BodyFit, Amrit Nagar, New Delhi" latitude={28.5684} longitude={77.2241} />
+            <LocationMap location="Gymnation, Shikaripalya, Electronic City" latitude={12.8360} longitude={77.6572} />
           </div>
 
           {/* Newsletter */}
@@ -234,9 +234,9 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-slate-800/60 pt-7 text-xs text-slate-500 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Body Fit Fitness Centre. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Gymnation Fitness Centre. All rights reserved.</p>
           <p>
-            Designed for <span className="font-semibold text-slate-400">Body Fit Fitness Centre</span>
+            Designed for <span className="font-semibold text-slate-400">Gymnation Fitness Centre</span>
           </p>
           <div className="flex flex-col items-center gap-1.5 sm:items-end">
             <ShinySheenButton

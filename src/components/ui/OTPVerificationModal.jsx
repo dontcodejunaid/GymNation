@@ -37,7 +37,7 @@ export default function OTPVerificationModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: phone,
-            message: `Your BodyFit verification OTP is ${code}. Valid for 10 minutes. Do not share it with anyone.`,
+            message: `Your Gymnation verification OTP is ${code}. Valid for 10 minutes. Do not share it with anyone.`,
           }),
         });
       } else {
@@ -166,7 +166,7 @@ export default function OTPVerificationModal({
 
   const cleanDigits = (phoneNumber || '').replace(/\D/g, '');
   const whatsappOtpUrl = `https://api.whatsapp.com/send?phone=${cleanDigits || '919876543210'}&text=${encodeURIComponent(
-    `Hi! My BodyFit OTP verification code is ${generatedOtp}. Please verify my phone number.`
+    `Hi! My Gymnation OTP verification code is ${generatedOtp}. Please verify my phone number.`
   )}`;
 
   return (

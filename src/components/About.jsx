@@ -43,14 +43,14 @@ export default function About() {
       setData(getAboutData());
     };
 
-    window.addEventListener('bodyfit_about_updated', handleUpdate);
+    window.addEventListener('gymnation_about_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
     window.addEventListener('focus', handleUpdate);
 
     return () => {
       isMounted = false;
       if (typeof unsubscribeFirebase === 'function') unsubscribeFirebase();
-      window.removeEventListener('bodyfit_about_updated', handleUpdate);
+      window.removeEventListener('gymnation_about_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
       window.removeEventListener('focus', handleUpdate);
     };
@@ -64,8 +64,8 @@ export default function About() {
   const handleSave = () => {
     setData(editForm);
     try {
-      localStorage.setItem('bodyfit_about_data', JSON.stringify(editForm));
-      window.dispatchEvent(new Event('bodyfit_about_updated'));
+      localStorage.setItem('gymnation_about_data', JSON.stringify(editForm));
+      window.dispatchEvent(new Event('gymnation_about_updated'));
     } catch (e) {
       console.error(e);
     }
@@ -75,7 +75,7 @@ export default function About() {
   const handleReset = () => {
     setData(INITIAL_ABOUT_DATA);
     setEditForm(INITIAL_ABOUT_DATA);
-    localStorage.removeItem('bodyfit_about_data');
+    localStorage.removeItem('gymnation_about_data');
     setIsEditing(false);
   };
 
@@ -306,7 +306,7 @@ export default function About() {
                   <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
                     <span className="flex items-center gap-2 text-slate-300 font-medium">
                       <Activity className="w-4 h-4 text-orange-500 animate-pulse" />
-                      D-20, Amrit Nagar, New Delhi
+                      01, Gollahalli Main Rd, Shikaripalya, Electronic City
                     </span>
                     <span className="text-amber-400 font-bold bg-amber-400/10 border border-amber-400/30 px-3 py-1 rounded-full shadow-inner">
                       5 Yrs Legacy
@@ -323,7 +323,7 @@ export default function About() {
                   <div className="relative overflow-hidden rounded-2xl aspect-[16/10] border border-slate-800">
                     <img
                       src={data.founder?.photo || ownerImg}
-                      alt="Body Fit Gym Founder & Lead Coach"
+                      alt="Gymnation Gym Founder & Lead Coach"
                       className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
                     />
 

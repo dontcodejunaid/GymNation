@@ -2,29 +2,29 @@
 //
 // Everything lives in localStorage, on the same keys the public site already
 // reads, so an edit here shows up on the live site after a refresh:
-//   bodyfit_bookings  <- BookingForm.jsx writes, Bookings panel manages
-//   bodyfit_trainers  <- Trainers.jsx reads
-//   bodyfit_classes   <- ClassSchedule.jsx reads
-//   bodyfit_memberships <- managed here only (no public section renders it yet)
+//   gymnation_bookings  <- BookingForm.jsx writes, Bookings panel manages
+//   gymnation_trainers  <- Trainers.jsx reads
+//   gymnation_classes   <- ClassSchedule.jsx reads
+//   gymnation_memberships <- managed here only (no public section renders it yet)
 
 import { INITIAL_TRAINERS, INITIAL_SCHEDULE } from '../data/trainersAndScheduleData';
 import { DEFAULT_MEMBERSHIP_PLANS } from '../data/membershipPlans';
 
 export const STORE_KEYS = {
-  BOOKINGS: 'bodyfit_bookings',
-  TRAINERS: 'bodyfit_trainers',
-  CLASSES: 'bodyfit_classes',
-  MEMBERSHIPS: 'bodyfit_memberships',
-  ABOUT: 'bodyfit_about_data',
-  MEMBER_SIGNUPS: 'bodyfit_member_signups',
+  BOOKINGS: 'gymnation_bookings',
+  TRAINERS: 'gymnation_trainers',
+  CLASSES: 'gymnation_classes',
+  MEMBERSHIPS: 'gymnation_memberships',
+  ABOUT: 'gymnation_about_data',
+  MEMBER_SIGNUPS: 'gymnation_member_signups',
 };
 
 export const INITIAL_ABOUT_DATA = {
   header: {
-    badge: 'About Body Fit Fitness Centre',
+    badge: 'About Gymnation Fitness Centre',
     titleMain: 'More Than a Gym - A Community',
     titleSub: 'Built on Discipline & Growth',
-    story: "Body Fit Fitness Centre was founded with a simple belief: fitness should be accessible, motivating, and sustainable for everyone - not just athletes. Located in the heart of Amrit Nagar, we've built a space where beginners feel welcome and serious lifters feel challenged. Our certified trainers, modern equipment, and supportive community come together to help every member reach their goals, one rep at a time.",
+    story: "Gymnation Fitness Centre was founded with a simple belief: fitness should be accessible, motivating, and sustainable for everyone - not just athletes. Located in the heart of Shikaripalya, we've built a space where beginners feel welcome and serious lifters feel challenged. Our certified trainers, modern equipment, and supportive community come together to help every member reach their goals, one rep at a time.",
   },
   tabContents: {
     philosophy: {
@@ -85,7 +85,7 @@ export const INITIAL_ABOUT_DATA = {
   badges: [
     { id: 1, text: 'ACE Certified Trainers' },
     { id: 2, text: 'ISO Hygiene Standards' },
-    { id: 3, text: 'Delhi Fitness Association Member' },
+    { id: 3, text: 'Karnataka Fitness Association Member' },
     { id: 4, text: '100% Sanitized Facility' },
   ],
   metrics: [
@@ -170,7 +170,7 @@ export const getTrainers = () => readSeeded(STORE_KEYS.TRAINERS, INITIAL_TRAINER
 export const saveTrainers = (list) => {
   const result = write(STORE_KEYS.TRAINERS, list);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('bodyfit-trainers-update'));
+    window.dispatchEvent(new CustomEvent('gymnation-trainers-update'));
     window.dispatchEvent(new Event('storage'));
   }
   return result;
@@ -180,7 +180,7 @@ export const getClasses = () => readSeeded(STORE_KEYS.CLASSES, INITIAL_SCHEDULE)
 export const saveClasses = (list) => {
   const result = write(STORE_KEYS.CLASSES, list);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('bodyfit-schedule-update'));
+    window.dispatchEvent(new CustomEvent('gymnation-schedule-update'));
     window.dispatchEvent(new Event('storage'));
   }
   return result;
@@ -207,7 +207,7 @@ export function getMemberships() {
 export const saveMemberships = (list) => {
   const result = write(STORE_KEYS.MEMBERSHIPS, list);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('bodyfit-memberships-update'));
+    window.dispatchEvent(new CustomEvent('gymnation-memberships-update'));
     window.dispatchEvent(new Event('storage'));
   }
   return result;
@@ -426,7 +426,7 @@ export function getAboutData() {
 export function saveAboutData(data) {
   const updated = write(STORE_KEYS.ABOUT, data);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('bodyfit_about_updated'));
+    window.dispatchEvent(new Event('gymnation_about_updated'));
   }
   return updated;
 }
@@ -434,7 +434,7 @@ export function saveAboutData(data) {
 export function resetAboutData() {
   const updated = write(STORE_KEYS.ABOUT, INITIAL_ABOUT_DATA);
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('bodyfit_about_updated'));
+    window.dispatchEvent(new Event('gymnation_about_updated'));
   }
   return updated;
 }

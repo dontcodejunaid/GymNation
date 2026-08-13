@@ -3,8 +3,8 @@ import { gsap } from "gsap"
 
 export function LayeredText({
   lines = [
-    { top: "\u00A0", bottom: "BODY FIT" },
-    { top: "BODY FIT", bottom: "FITNESS" },
+    { top: "\u00A0", bottom: "GYMNATION" },
+    { top: "GYMNATION", bottom: "FITNESS" },
     { top: "FITNESS", bottom: "CENTRE" },
     { top: "CENTRE", bottom: "\u00A0" },
   ],

@@ -18,6 +18,6 @@ export function generateUUID() {
  * Generates static token string for QR Code payload (Always normalized to UPPERCASE)
  */
 export function generateStaticToken(memberId, passId) {
-  const token = passId || memberId || 'BF-DEFAULT-PASS';
+  const token = passId || memberId || 'GN-DEFAULT-PASS';
   return String(token).toUpperCase();
 }

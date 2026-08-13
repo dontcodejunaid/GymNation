@@ -29,7 +29,7 @@ export default function BMIReportModal({ isOpen, onClose, metricsData }) {
 
   const handleDownloadSummary = () => {
     const reportText = `=====================================================
-BODYFIT FITNESS CENTRE - PERSONAL PERFORMANCE REPORT
+GYMNATION FITNESS CENTRE - PERSONAL PERFORMANCE REPORT
 =====================================================
 Date: ${new Date().toLocaleDateString()}
 
@@ -55,14 +55,14 @@ ${currentDiet.map((d) => `• ${d.meal}: ${d.detail}`).join('\n')}
 TRAINER RECOMMENDATIONS:
 - Drink 3.5L to 4L of water daily.
 - Ensure 7-8 hours of sound sleep for muscle hypertrophy and fat oxidation.
-- Contact Bodyfit Fitness Centre for 1-on-1 certified personal coaching.
+- Contact Gymnation Fitness Centre for 1-on-1 certified personal coaching.
 =====================================================`;
 
     const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `BodyFit_Fitness_Report_${bmi}.txt`;
+    link.download = `Gymnation_Fitness_Report_${bmi}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -131,9 +131,9 @@ TRAINER RECOMMENDATIONS:
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-slate-950 border-b border-slate-800 shrink-0 print:bg-white print:border-b-2 print:border-slate-300">
           <div className="flex items-center gap-3">
-            <img src={logoImg} alt="BodyFit Logo" className="h-9 w-auto" />
+            <img src={logoImg} alt="Gymnation Logo" className="h-9 w-auto" />
             <div>
-              <h3 className="text-base font-black text-white print:text-slate-900 leading-none">BODY FIT PERFORMANCE REPORT</h3>
+              <h3 className="text-base font-black text-white print:text-slate-900 leading-none">GYMNATION PERFORMANCE REPORT</h3>
               <span className="text-[10px] text-slate-400 print:text-slate-600 font-bold uppercase tracking-wider">Personalized Nutrition &amp; Workout Blueprint</span>
             </div>
           </div>
@@ -258,7 +258,7 @@ TRAINER RECOMMENDATIONS:
               {/* Certified Coach Guidelines */}
               <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-[10px] text-orange-300 space-y-1 print:bg-slate-100 print:text-slate-900 print:border-slate-300">
                 <div className="font-extrabold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-400" /> BodyFit Trainer Guidance
+                  <CheckCircle2 className="w-3.5 h-3.5 text-orange-400" /> Gymnation Trainer Guidance
                 </div>
                 <p className="leading-tight text-slate-400 print:text-slate-700">
                   Drink 3.5L to 4L of water daily. Ensure 7-8 hours of sound sleep for muscle hypertrophy and optimal fat oxidation.
@@ -272,7 +272,7 @@ TRAINER RECOMMENDATIONS:
         {/* Footer Action Bar */}
         <div className="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between shrink-0 print:hidden">
           <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline-block">
-            Want 1-on-1 personalized trainer coaching at BodyFit?
+            Want 1-on-1 personalized trainer coaching at Gymnation?
           </span>
 
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">

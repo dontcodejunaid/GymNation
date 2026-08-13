@@ -5,7 +5,7 @@ import {
   BarChart2, Activity, Scale, Ruler, ChevronDown, ChevronUp, Target
 } from 'lucide-react';
 
-const STORAGE_KEY = 'bodyfit_progress_logs';
+const STORAGE_KEY = 'gymnation_progress_logs';
 
 const METRICS = [
   { key: 'weight',  label: 'Weight',    unit: 'kg',  color: '#f97316' },

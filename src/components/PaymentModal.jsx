@@ -10,6 +10,7 @@ import {
   PAYMENT_PROVIDERS,
   createPaymentSessionToken
 } from '../utils/payment';
+import { hasSessionPrefix } from '../utils/passId';
 import { trackEvent } from '../utils/analytics';
 
 export default function PaymentModal({ plan, discountPercent = 0, isOpen, onClose, onPaymentSuccess }) {
@@ -55,7 +56,7 @@ export default function PaymentModal({ plan, discountPercent = 0, isOpen, onClos
     }
 
     // Security Verification: Require valid session token
-    if (!sessionToken || !sessionToken.startsWith('BF-SESS-')) {
+    if (!hasSessionPrefix(sessionToken)) {
       setErrorMessage('Security Warning: Invalid payment session. Session expired.');
       return;
     }
@@ -103,7 +104,7 @@ export default function PaymentModal({ plan, discountPercent = 0, isOpen, onClos
             </div>
             <div>
               <h3 className="text-lg font-black text-white">Secure Checkout</h3>
-              <p className="text-xs text-slate-400">Official BodyFit Pass Purchase</p>
+              <p className="text-xs text-slate-400">Official Gymnation Pass Purchase</p>
             </div>
           </div>
           <button
@@ -126,7 +127,7 @@ export default function PaymentModal({ plan, discountPercent = 0, isOpen, onClos
               <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold uppercase tracking-wider">
                 Payment Received & Verified
               </span>
-              <h4 className="text-2xl font-black text-white">Welcome to BodyFit!</h4>
+              <h4 className="text-2xl font-black text-white">Welcome to Gymnation!</h4>
               <p className="text-slate-300 text-sm max-w-md mx-auto">
                 Your payment of <strong className="text-white">₹{pricing.totalAmount}</strong> was successful. Your official digital membership pass is now generated.
               </p>

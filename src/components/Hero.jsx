@@ -122,8 +122,8 @@ export default function Hero() {
               <div className="space-y-1 sm:space-y-2 max-w-4xl mx-auto pt-4 sm:pt-0">
                 <LayeredText
                   lines={[
-                    { top: "\u00A0", bottom: "BODY FIT" },
-                    { top: "BODY FIT", bottom: "FITNESS" },
+                    { top: "\u00A0", bottom: "GYMNATION" },
+                    { top: "GYMNATION", bottom: "FITNESS" },
                     { top: "FITNESS", bottom: "CENTRE" },
                     { top: "CENTRE", bottom: "\u00A0" },
                   ]}

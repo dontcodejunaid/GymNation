@@ -33,13 +33,13 @@ export default function MembershipPlans({ onSelectPlan }) {
 
     const handleRefresh = () => loadPlans();
     window.addEventListener('storage', handleRefresh);
-    window.addEventListener('bodyfit_memberships_updated', handleRefresh);
+    window.addEventListener('gymnation_memberships_updated', handleRefresh);
     document.addEventListener('visibilitychange', handleRefresh);
 
     return () => {
       isMounted = false;
       window.removeEventListener('storage', handleRefresh);
-      window.removeEventListener('bodyfit_memberships_updated', handleRefresh);
+      window.removeEventListener('gymnation_memberships_updated', handleRefresh);
       document.removeEventListener('visibilitychange', handleRefresh);
     };
   }, []);

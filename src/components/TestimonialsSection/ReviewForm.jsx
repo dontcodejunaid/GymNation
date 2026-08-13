@@ -70,7 +70,7 @@ export default function ReviewForm({
 
         <p className="text-sm leading-6 text-slate-400">
           Your journey may inspire someone to begin theirs.
-          Every approved review helps grow the BodyFit community.
+          Every approved review helps grow the Gymnation community.
         </p>
       </div>
 
@@ -205,7 +205,7 @@ export default function ReviewForm({
               handleChange("review", e.target.value)
             }
             maxLength={MAX_CHARACTERS}
-            placeholder="Tell us about your BodyFit journey..."
+            placeholder="Tell us about your Gymnation journey..."
             className="
               w-full
               resize-none

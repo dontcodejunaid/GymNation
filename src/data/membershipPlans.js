@@ -1,6 +1,6 @@
 // Default membership plans.
 //
-// These seed localStorage['bodyfit_memberships'] the first time the site runs.
+// These seed localStorage['gymnation_memberships'] the first time the site runs.
 // After that the admin panel is the source of truth: edits there flow straight
 // into the public MembershipPlans section.
 //

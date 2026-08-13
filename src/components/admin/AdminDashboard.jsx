@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
-  CalendarCheck, Settings2, BarChart3, LogOut, ExternalLink, MonitorSmartphone, CreditCard, Info,
+  CalendarCheck, Settings2, BarChart3, LogOut, ExternalLink, MonitorSmartphone, CreditCard, Info, BellRing,
 } from 'lucide-react';
 import BookingsPanel from './BookingsPanel';
 import MembershipsPanel from './MembershipsPanel';
+import RenewalsPanel from './RenewalsPanel';
 import ManagePanel from './ManagePanel';
 import AnalyticsPanel from './AnalyticsPanel';
 import AboutPanel from './AboutPanel';
@@ -21,6 +22,7 @@ import { MEMBERSHIP_SIGNUP_EVENT } from '../../utils/membershipSignups';
 const TABS = [
   { id: 'bookings', label: 'Bookings', icon: CalendarCheck },
   { id: 'memberships', label: 'Memberships', icon: CreditCard },
+  { id: 'renewals', label: 'Renewals', icon: BellRing },
   { id: 'manage', label: 'Manage', icon: Settings2 },
   { id: 'about', label: 'About Us', icon: Info },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -136,7 +138,7 @@ export default function AdminDashboard({ onLogout, onExit }) {
       <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3">
-            <img alt="Body Fit" className="h-9 w-auto" src={logoImg} />
+            <img alt="Gymnation" className="h-9 w-auto" src={logoImg} />
             <div>
               <div className="font-teko text-xl leading-none tracking-wide text-white">
                 OWNER <span className="text-orange-500">PANEL</span>
@@ -239,6 +241,22 @@ export default function AdminDashboard({ onLogout, onExit }) {
             </div>
 
             <MembershipsPanel onChange={setMemberSignups} signups={memberSignups} />
+          </>
+        )}
+
+        {tab === 'renewals' && (
+          <>
+            <div className="mb-6">
+              <h1 className="font-teko text-3xl uppercase tracking-wide text-white">Renewals</h1>
+              <p className="mt-1 text-sm text-slate-400">
+                Expiry reminders at 5, 3 and 1 days before a membership lapses
+              </p>
+            </div>
+
+            <RenewalsPanel
+              onChange={() => setMemberSignups(getMemberSignups())}
+              signups={memberSignups}
+            />
           </>
         )}
 

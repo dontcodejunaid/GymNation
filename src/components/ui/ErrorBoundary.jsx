@@ -12,7 +12,7 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('BodyFit App Runtime Error Caught:', error, errorInfo);
+    console.error('Gymnation App Runtime Error Caught:', error, errorInfo);
   }
 
   render() {

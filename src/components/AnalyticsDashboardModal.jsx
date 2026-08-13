@@ -28,7 +28,7 @@ export default function AnalyticsDashboardModal({ isOpen, onClose }) {
               <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-white">BodyFit Business Analytics & Member Roster</h3>
+              <h3 className="text-lg font-black text-white">Gymnation Business Analytics & Member Roster</h3>
               <p className="text-xs text-slate-400">Click any metric card below to view detailed member entries</p>
             </div>
           </div>
@@ -263,12 +263,12 @@ export default function AnalyticsDashboardModal({ isOpen, onClose }) {
                 <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">Direct Visits</span>
                   <span className="text-lg font-black text-white">30%</span>
-                  <span className="text-[10px] text-slate-500 block">bodyfit.com</span>
+                  <span className="text-[10px] text-slate-500 block">gymnation.com</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">Instagram</span>
                   <span className="text-lg font-black text-pink-400">15%</span>
-                  <span className="text-[10px] text-slate-500 block">@bodyfit_delhi</span>
+                  <span className="text-[10px] text-slate-500 block">@gymnation_ecity</span>
                 </div>
                 <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
                   <span className="text-slate-400 text-[10px] uppercase font-bold block">WhatsApp</span>

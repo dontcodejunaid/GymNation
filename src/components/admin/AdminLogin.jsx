@@ -57,7 +57,7 @@ export default function AdminLogin({ onSuccess, onExit }) {
 
         <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-8 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-col items-center text-center">
-            <img alt="Body Fit" className="h-12 w-auto" src={logoImg} />
+            <img alt="Gymnation" className="h-12 w-auto" src={logoImg} />
             <h1 className="font-teko mt-4 text-3xl uppercase tracking-wide text-white">
               Owner Panel
             </h1>
@@ -81,7 +81,7 @@ export default function AdminLogin({ onSuccess, onExit }) {
                   className="min-w-0 flex-1 bg-transparent py-3 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none"
                   id="admin-email"
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="owner@bodyfit.com"
+                  placeholder="owner@gymnation.com"
                   required
                   type="text"
                   value={email}

@@ -1,4 +1,4 @@
-// Firebase Cloud Integration & Analytics for BodyFit
+// Firebase Cloud Integration & Analytics for Gymnation
 import { initializeApp } from 'firebase/app';
 import {
   getFirestore,
@@ -17,6 +17,7 @@ import {
 import { getAnalytics, isSupported } from 'firebase/analytics';
 import { INITIAL_TRAINERS } from './data/trainersAndScheduleData';
 import { DEFAULT_MEMBERSHIP_PLANS } from './data/membershipPlans';
+import { hasPassPrefix } from './utils/passId';
 
 // Check if Firebase configuration environment variables are present and valid
 export const isFirebaseConfigured = Boolean(
@@ -101,10 +102,10 @@ export async function saveNewsletterSubscriberToFirebase(email) {
 
   // Local storage fallback
   try {
-    const localSubs = JSON.parse(localStorage.getItem('bodyfit_newsletter_subscribers') || '[]');
+    const localSubs = JSON.parse(localStorage.getItem('gymnation_newsletter_subscribers') || '[]');
     if (!localSubs.some(s => s.email === cleanEmail)) {
       localSubs.unshift(subscriberData);
-      localStorage.setItem('bodyfit_newsletter_subscribers', JSON.stringify(localSubs));
+      localStorage.setItem('gymnation_newsletter_subscribers', JSON.stringify(localSubs));
     }
   } catch (e) {}
 
@@ -211,7 +212,7 @@ function getBookingDocId(booking) {
  */
 export async function saveBookingToFirebase(bookingData) {
   const randomId = Math.floor(10000 + Math.random() * 90000);
-  const docId = getBookingDocId({ ...bookingData, id: bookingData.id || `BF-${randomId}` });
+  const docId = getBookingDocId({ ...bookingData, id: bookingData.id || `GN-${randomId}` });
   const bookingWithId = {
     id: docId,
     docId,
@@ -668,7 +669,7 @@ export async function getBookingsFromFirebase() {
  */
 export async function updateBookingInFirebase(docIdOrBookingId, patch) {
   try {
-    if (docIdOrBookingId && typeof docIdOrBookingId === 'string' && docIdOrBookingId.length > 15 && !docIdOrBookingId.startsWith('BF-')) {
+    if (docIdOrBookingId && typeof docIdOrBookingId === 'string' && docIdOrBookingId.length > 15 && !hasPassPrefix(docIdOrBookingId)) {
       const docRef = doc(db, BOOKINGS_COLLECTION, docIdOrBookingId);
       await updateDoc(docRef, patch);
       return true;
@@ -694,7 +695,7 @@ export async function updateBookingInFirebase(docIdOrBookingId, patch) {
  */
 export async function deleteBookingFromFirebase(docIdOrBookingId) {
   try {
-    if (docIdOrBookingId && typeof docIdOrBookingId === 'string' && docIdOrBookingId.length > 15 && !docIdOrBookingId.startsWith('BF-')) {
+    if (docIdOrBookingId && typeof docIdOrBookingId === 'string' && docIdOrBookingId.length > 15 && !hasPassPrefix(docIdOrBookingId)) {
       const docRef = doc(db, BOOKINGS_COLLECTION, docIdOrBookingId);
       await deleteDoc(docRef);
       return true;

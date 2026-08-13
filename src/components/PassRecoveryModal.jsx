@@ -3,6 +3,7 @@ import { Search, QrCode, X, Phone, CheckCircle2, AlertCircle, RefreshCw, Message
 import { getBookingsFromFirebase } from '../firebase';
 import { getBookings as getLocalBookings, findUserProfileByPhone, saveUserProfile } from '../utils/localStorage';
 import { WhatsAppConfig } from '../utils/whatsapp';
+import { stripPassPrefix, withPassPrefix } from '../utils/passId';
 import OTPVerificationModal from './ui/OTPVerificationModal';
 
 export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) {
@@ -35,16 +36,16 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
       // 3. Check active pass saved in localStorage
       let storedPassBooking = null;
       try {
-        const rawPass = localStorage.getItem('bodyfit_member_pass');
+        const rawPass = localStorage.getItem('gymnation_member_pass');
         if (rawPass) {
           const parsed = JSON.parse(rawPass);
           if (parsed && parsed.customer) {
             storedPassBooking = {
-              id: parsed.paymentResult?.paymentId ? (parsed.paymentResult.paymentId.startsWith('BF-') ? parsed.paymentResult.paymentId : `BF-${parsed.paymentResult.paymentId}`) : 'BF-PASS',
+              id: parsed.paymentResult?.paymentId ? withPassPrefix(parsed.paymentResult.paymentId) : 'GN-PASS',
               name: parsed.customer.name,
               phone: parsed.customer.phone,
               email: parsed.customer.email,
-              service: parsed.plan?.name || 'BodyFit Member Pass',
+              service: parsed.plan?.name || 'Gymnation Member Pass',
               date: parsed.date || 'Active',
               time: parsed.time || '',
               trainer: parsed.trainer || ''
@@ -98,11 +99,11 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
         }
 
         const passes = uniqueMatches.map((m, idx) => {
-          const rawId = String(m?.id || `BF-${queryDigits ? queryDigits.slice(0, 6) : 849201 + idx}`);
-          const mId = (rawId.startsWith('BF-') ? rawId : `BF-${rawId}`).toUpperCase();
+          const rawId = String(m?.id || `GN-${queryDigits ? queryDigits.slice(0, 6) : 849201 + idx}`);
+          const mId = withPassPrefix(rawId).toUpperCase();
           return {
             id: mId,
-            service: String(m?.service || 'BodyFit Membership Pass'),
+            service: String(m?.service || 'Gymnation Membership Pass'),
             name: String(m?.name || m?.customerName || m?.customer?.name || ''),
             date: m?.date || 'Active',
             time: m?.time || '',
@@ -111,10 +112,10 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
           };
         });
 
-        const rawId = String(matches[0]?.id || `BF-${queryDigits ? queryDigits.slice(0, 6) : '84920194'}`);
-        const cleanPaymentId = rawId.replace(/^BF-/i, '');
+        const rawId = String(matches[0]?.id || `GN-${queryDigits ? queryDigits.slice(0, 6) : '84920194'}`);
+        const cleanPaymentId = stripPassPrefix(rawId);
 
-        const resolvedName = String(matches[0]?.name || savedProfile?.name || nameInput.trim() || 'BodyFit Member');
+        const resolvedName = String(matches[0]?.name || savedProfile?.name || nameInput.trim() || 'Gymnation Member');
 
         if (nameInput.trim() && queryDigits) {
           saveUserProfile(queryDigits, nameInput.trim(), String(matches[0]?.email || ''));
@@ -127,7 +128,7 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
             email: String(matches[0]?.email || '')
           },
           plan: {
-            name: String(matches[0]?.service || 'BodyFit Membership Pass')
+            name: String(matches[0]?.service || 'Gymnation Membership Pass')
           },
           paymentResult: {
             paymentId: cleanPaymentId || '84920194'
@@ -138,14 +139,14 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
         setFoundPass(memberData);
         setIsOtpModalOpen(true);
       } else {
-        // Generate consistent deterministic Pass ID based on phone digits (e.g. BF-94807358)
+        // Generate consistent deterministic Pass ID based on phone digits (e.g. GN-94807358)
         const deterministicId = queryDigits && queryDigits.length >= 8
-          ? `BF-${queryDigits.slice(-8)}`
-          : `BF-${Math.floor(100000 + Math.random() * 900000)}`;
+          ? `GN-${queryDigits.slice(-8)}`
+          : `GN-${Math.floor(100000 + Math.random() * 900000)}`;
 
-        const resolvedName = nameInput.trim() || savedProfile?.name || 'BodyFit Member';
+        const resolvedName = nameInput.trim() || savedProfile?.name || 'Gymnation Member';
 
-        if (queryDigits && resolvedName !== 'BodyFit Member') {
+        if (queryDigits && resolvedName !== 'Gymnation Member') {
           saveUserProfile(queryDigits, resolvedName);
         }
 
@@ -156,15 +157,15 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
             email: ''
           },
           plan: {
-            name: 'BodyFit Active Member Pass'
+            name: 'Gymnation Active Member Pass'
           },
           paymentResult: {
-            paymentId: deterministicId.replace(/^BF-/, '')
+            paymentId: stripPassPrefix(deterministicId)
           },
           passes: [
             {
               id: deterministicId,
-              service: 'BodyFit Active Member Pass',
+              service: 'Gymnation Active Member Pass',
               date: new Date().toISOString().split('T')[0],
               time: 'All Day Access',
               trainer: 'Unassigned',
@@ -179,12 +180,12 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
     } catch (err) {
       console.error('Error in pass recovery search:', err);
       const queryDigits = cleanQuery.replace(/\D/g, '');
-      const deterministicId = queryDigits && queryDigits.length >= 8 ? `BF-${queryDigits.slice(-8)}` : 'BF-84920194';
+      const deterministicId = queryDigits && queryDigits.length >= 8 ? `GN-${queryDigits.slice(-8)}` : 'GN-84920194';
       setFoundPass({
-        customer: { name: nameInput.trim() || 'BodyFit Member', phone: cleanQuery, email: '' },
-        plan: { name: 'BodyFit Member Pass' },
-        paymentResult: { paymentId: deterministicId.replace(/^BF-/, '') },
-        passes: [{ id: deterministicId, service: 'BodyFit Member Pass', date: 'Active', time: '', trainer: '', status: 'Active' }]
+        customer: { name: nameInput.trim() || 'Gymnation Member', phone: cleanQuery, email: '' },
+        plan: { name: 'Gymnation Member Pass' },
+        paymentResult: { paymentId: stripPassPrefix(deterministicId) },
+        passes: [{ id: deterministicId, service: 'Gymnation Member Pass', date: 'Active', time: '', trainer: '', status: 'Active' }]
       });
       setIsOtpModalOpen(true);
     } finally {
@@ -196,7 +197,7 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
     setIsOtpModalOpen(false);
     if (foundPass) {
       try {
-        localStorage.setItem('bodyfit_member_pass', JSON.stringify(foundPass));
+        localStorage.setItem('gymnation_member_pass', JSON.stringify(foundPass));
       } catch (e) {
         console.error('Error restoring pass to local storage:', e);
       }
@@ -295,7 +296,7 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
                   View Membership Plans
                 </button>
                 <a
-                  href={`https://wa.me/${WhatsAppConfig.ActiveNumber}?text=${encodeURIComponent('Hi BodyFit! My phone number is not showing an active membership plan.')}`}
+                  href={`https://wa.me/${WhatsAppConfig.ActiveNumber}?text=${encodeURIComponent('Hi Gymnation! My phone number is not showing an active membership plan.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-bold text-[11px] transition-all"

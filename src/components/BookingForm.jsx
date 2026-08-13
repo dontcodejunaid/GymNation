@@ -24,7 +24,7 @@ export default function BookingForm({ selectedPlan = null, selectedClass = null,
     async function syncTrainers() {
       let combined = INITIAL_TRAINERS;
       try {
-        const rawLocal = localStorage.getItem('bodyfit_trainers');
+        const rawLocal = localStorage.getItem('gymnation_trainers');
         const localList = rawLocal ? JSON.parse(rawLocal) : INITIAL_TRAINERS;
         const fbList = (await getTrainersFromFirebase()) || [];
 
@@ -61,14 +61,14 @@ export default function BookingForm({ selectedPlan = null, selectedClass = null,
 
     const handleUpdate = () => syncTrainers();
     window.addEventListener('storage', handleUpdate);
-    window.addEventListener('bodyfit-trainers-update', handleUpdate);
-    window.addEventListener('bodyfit_trainers_updated', handleUpdate);
+    window.addEventListener('gymnation-trainers-update', handleUpdate);
+    window.addEventListener('gymnation_trainers_updated', handleUpdate);
 
     return () => {
       isMounted = false;
       window.removeEventListener('storage', handleUpdate);
-      window.removeEventListener('bodyfit-trainers-update', handleUpdate);
-      window.removeEventListener('bodyfit_trainers_updated', handleUpdate);
+      window.removeEventListener('gymnation-trainers-update', handleUpdate);
+      window.removeEventListener('gymnation_trainers_updated', handleUpdate);
     };
   }, []);
 
@@ -126,7 +126,7 @@ export default function BookingForm({ selectedPlan = null, selectedClass = null,
 
     // 3. Check if trainer is scheduled for a group class at this date & time
     try {
-      const savedClasses = JSON.parse(localStorage.getItem('bodyfit_classes') || '[]');
+      const savedClasses = JSON.parse(localStorage.getItem('gymnation_classes') || '[]');
       const dateObj = new Date(selectedDate);
       const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const dayName = dayNames[dateObj.getDay()];
@@ -899,7 +899,7 @@ export default function BookingForm({ selectedPlan = null, selectedClass = null,
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500" />
                   
                   <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                    <span className="text-xs text-slate-400 font-bold uppercase">Body Fit Pass</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase">Gymnation Pass</span>
                     <span className="text-xs font-mono font-extrabold text-emerald-400">ACTIVE</span>
                   </div>
 
@@ -912,7 +912,7 @@ export default function BookingForm({ selectedPlan = null, selectedClass = null,
 
                   <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
                     <span>LocalStorage Verified</span>
-                    <span>Amrit Nagar, New Delhi</span>
+                    <span>Shikaripalya, Electronic City</span>
                   </div>
                 </div>
 

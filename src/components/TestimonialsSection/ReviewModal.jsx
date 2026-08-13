@@ -175,7 +175,7 @@ export default function ReviewModal({
                   </h2>
 
                   <p className="text-xs text-slate-400">
-                    Inspire future BodyFit members with your transformation.
+                    Inspire future Gymnation members with your transformation.
                   </p>
                 </div>
               </div>

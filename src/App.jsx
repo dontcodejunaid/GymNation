@@ -29,6 +29,7 @@ import { trackEvent } from './utils/analytics';
 import { saveBooking } from './utils/localStorage';
 import { saveBookingToFirebase } from './firebase';
 import { recordMembershipSignup } from './utils/membershipSignups';
+import { withPassPrefix } from './utils/passId';
 
 function App() {
   const [_selectedTrainer, setSelectedTrainer] = useState(null);
@@ -48,7 +49,7 @@ function App() {
     trackEvent('PAGE_VIEW');
 
     try {
-      const savedPass = localStorage.getItem('bodyfit_member_pass');
+      const savedPass = localStorage.getItem('gymnation_member_pass');
       if (savedPass) {
         setActiveMemberPass(JSON.parse(savedPass));
       }
@@ -82,13 +83,13 @@ function App() {
     setIsPassModalOpen(true);
 
     const rawPaymentId = memberData.paymentResult?.paymentId || '';
-    const cleanPaymentId = rawPaymentId.startsWith('BF-') ? rawPaymentId : `BF-${rawPaymentId}`;
+    const cleanPaymentId = withPassPrefix(rawPaymentId);
     const bookingRecord = {
-      id: rawPaymentId ? cleanPaymentId.toUpperCase() : `BF-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: memberData.customer?.name || 'BodyFit Member',
+      id: rawPaymentId ? cleanPaymentId.toUpperCase() : `GN-${Math.floor(10000 + Math.random() * 90000)}`,
+      name: memberData.customer?.name || 'Gymnation Member',
       phone: memberData.customer?.phone || '',
       email: memberData.customer?.email || '',
-      service: memberData.plan?.name || 'BodyFit Membership Pass',
+      service: memberData.plan?.name || 'Gymnation Membership Pass',
       date: memberData.date || new Date().toISOString().split('T')[0],
       time: memberData.time || 'All Day Access',
       trainer: memberData.trainer || 'Unassigned',
@@ -118,7 +119,7 @@ function App() {
     }
 
     try {
-      localStorage.setItem('bodyfit_member_pass', JSON.stringify(memberData));
+      localStorage.setItem('gymnation_member_pass', JSON.stringify(memberData));
     } catch (e) {
       console.error('Failed to save member pass:', e);
     }

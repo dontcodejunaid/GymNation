@@ -81,8 +81,10 @@ function App() {
     setIsPaymentModalOpen(false);
     setIsPassModalOpen(true);
 
+    const rawPaymentId = memberData.paymentResult?.paymentId || '';
+    const cleanPaymentId = rawPaymentId.startsWith('BF-') ? rawPaymentId : `BF-${rawPaymentId}`;
     const bookingRecord = {
-      id: memberData.paymentResult?.paymentId ? `BF-${memberData.paymentResult.paymentId.replace(/^BF-/, '')}` : `BF-${Math.floor(10000 + Math.random() * 90000)}`,
+      id: rawPaymentId ? cleanPaymentId.toUpperCase() : `BF-${Math.floor(10000 + Math.random() * 90000)}`,
       name: memberData.customer?.name || 'BodyFit Member',
       phone: memberData.customer?.phone || '',
       email: memberData.customer?.email || '',

@@ -1,78 +1,9 @@
 import React, { useRef, useState, useMemo } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { jsPDF } from 'jspdf';
 import { X, QrCode, ShieldCheck, Download, Calendar, MapPin, Sparkles, User, Dumbbell, Layers } from 'lucide-react';
 import logoImg from '../assets/logo.png';
-
-/**
- * Generates a deterministic array of QR module rect coordinates based on a seed string (Pass ID).
- * Grid size: 21x21 modules.
- */
-function generateQRModules(seedString) {
-  let hash = 0;
-  const str = seedString || 'BF-DEFAULT-PASS';
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-
-  const gridSize = 21;
-  const cellSize = 100 / gridSize;
-  const grid = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
-
-  const markFinder = (startR, startC) => {
-    for (let r = 0; r < 7; r++) {
-      for (let c = 0; c < 7; c++) {
-        const isBorder = r === 0 || r === 6 || c === 0 || c === 6;
-        const isCenter = r >= 2 && r <= 4 && c >= 2 && c <= 4;
-        if (isBorder || isCenter) {
-          grid[startR + r][startC + c] = true;
-        }
-      }
-    }
-  };
-
-  markFinder(0, 0);
-  markFinder(0, gridSize - 7);
-  markFinder(gridSize - 7, 0);
-
-  let state = Math.abs(hash) || 987654321;
-  const nextRandom = () => {
-    state = (state * 1664525 + 1013904223) % 4294967296;
-    return state / 4294967296;
-  };
-
-  const modules = [];
-
-  for (let r = 0; r < gridSize; r++) {
-    for (let c = 0; c < gridSize; c++) {
-      const inTopLeft = r < 8 && c < 8;
-      const inTopRight = r < 8 && c >= gridSize - 8;
-      const inBottomLeft = r >= gridSize - 8 && c < 8;
-
-      if (!inTopLeft && !inTopRight && !inBottomLeft) {
-        if (nextRandom() > 0.52) {
-          grid[r][c] = true;
-        }
-      }
-
-      if (grid[r][c]) {
-        const isTLCenter = r >= 2 && r <= 4 && c >= 2 && c <= 4;
-        const isTRCenter = r >= 2 && r <= 4 && c >= gridSize - 5 && c <= gridSize - 3;
-        const isBLCenter = r >= gridSize - 5 && r <= gridSize - 3 && c >= 2 && c <= 4;
-        const isOrange = isTLCenter || isTRCenter || isBLCenter;
-
-        modules.push({
-          x: (c * cellSize).toFixed(2),
-          y: (r * cellSize).toFixed(2),
-          w: (cellSize + 0.1).toFixed(2),
-          h: (cellSize + 0.1).toFixed(2),
-          fill: isOrange ? '#f97316' : '#0f172a'
-        });
-      }
-    }
-  }
-
-  return modules;
-}
+import { generateStaticToken } from '../services/qrEngine';
 
 export default function DigitalMemberCardModal({ memberData, isOpen, onClose, onOpenRecovery }) {
   const cardRef = useRef(null);
@@ -80,22 +11,37 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
 
   const passesList = useMemo(() => {
     if (!memberData) return [];
+    let list = [];
     if (Array.isArray(memberData.passes) && memberData.passes.length > 0) {
-      return memberData.passes;
-    }
-    const rawPayId = String(memberData.paymentResult?.paymentId || '2026-8492');
-    const cleanPayId = rawPayId.startsWith('BF-') ? rawPayId : `BF-${rawPayId.toUpperCase()}`;
+      list = memberData.passes;
+    } else {
+      const rawPayId = String(memberData.paymentResult?.paymentId || '2026-8492');
+      const cleanPayId = (rawPayId.startsWith('BF-') ? rawPayId : `BF-${rawPayId}`).toUpperCase();
 
-    return [
-      {
-        id: cleanPayId,
-        service: String(memberData.plan?.name || 'Standard Membership'),
-        date: memberData.date || 'Active',
-        time: memberData.time || '',
-        trainer: memberData.trainer || '',
-        status: 'Active'
-      }
-    ];
+      list = [
+        {
+          id: cleanPayId,
+          service: String(memberData.plan?.name || 'Standard Membership'),
+          name: String(memberData.customer?.name || 'BodyFit Member'),
+          date: memberData.date || 'Active',
+          time: memberData.time || '',
+          trainer: memberData.trainer || '',
+          status: 'Active'
+        }
+      ];
+    }
+
+    // Normalize IDs to uppercase and deduplicate passes by unique ID and service name
+    const seen = new Set();
+    return list.map((p) => ({
+      ...p,
+      id: (String(p.id).startsWith('BF-') ? String(p.id) : `BF-${p.id}`).toUpperCase()
+    })).filter((p) => {
+      const key = `${p.id}_${p.service || ''}`.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }, [memberData]);
 
   if (!isOpen || !memberData || passesList.length === 0) return null;
@@ -103,11 +49,11 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
   const activeIndex = selectedPassIndex < passesList.length ? selectedPassIndex : 0;
   const currentPass = passesList[activeIndex] || passesList[0];
 
-  const memberName = String(memberData.customer?.name || 'BodyFit Member');
+  const memberName = String(currentPass.name || currentPass.customerName || memberData.customer?.name || 'BodyFit Member');
   const memberPhone = String(memberData.customer?.phone || '+91 98765 43210');
   const planName = String(currentPass.service || 'Standard Membership');
   const rawPassId = String(currentPass.id || 'BF-84920194');
-  const passId = rawPassId.startsWith('BF-') ? rawPassId : `BF-${rawPassId}`;
+  const passId = (rawPassId.startsWith('BF-') ? rawPassId : `BF-${rawPassId}`).toUpperCase();
   
   // Expiry date calculation (1 month or 1 year)
   const validUntilDate = new Date();
@@ -118,208 +64,93 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
     year: 'numeric'
   });
 
-  const qrModules = generateQRModules(passId);
+  const staticQrPayload = generateStaticToken(memberName, passId);
 
-  // Dedicated 1-Page PDF Print Handler
+  // High-Resolution 1-Page PDF Pass Download Handler
   const handlePrintPass = () => {
-    const printWindow = window.open('', '_blank', 'width=500,height=700');
-    if (!printWindow) {
-      alert('Please allow popups for this site to download/print your 1-page pass.');
-      return;
+    try {
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [85.6, 120]
+      });
+
+      // Card Background (Dark Navy)
+      doc.setFillColor(9, 13, 22);
+      doc.rect(0, 0, 85.6, 120, 'F');
+
+      // Top Header Accent Line (Orange)
+      doc.setFillColor(249, 115, 22);
+      doc.rect(0, 0, 85.6, 6, 'F');
+
+      // Brand Title
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('BODYFIT', 42.8, 14, { align: 'center' });
+
+      doc.setFontSize(8);
+      doc.setTextColor(249, 115, 22);
+      doc.text('FITNESS CENTRE • DIGITAL PASS', 42.8, 19, { align: 'center' });
+
+      // Divider
+      doc.setDrawColor(51, 65, 85);
+      doc.line(10, 23, 75.6, 23);
+
+      // Member Details
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(memberName.toUpperCase(), 42.8, 30, { align: 'center' });
+
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`PASS ID: ${passId}`, 42.8, 35, { align: 'center' });
+      doc.text(`PLAN: ${planName}`, 42.8, 40, { align: 'center' });
+      doc.text(`VALID TILL: ${formattedValidity}`, 42.8, 45, { align: 'center' });
+
+      // QR Code Box (White background)
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(17.8, 49, 50, 50, 3, 3, 'F');
+
+      // Draw QR Code SVG onto canvas -> PDF
+      const qrSvgElement = document.querySelector('.bodyfit-qr-container svg');
+      if (qrSvgElement) {
+        const xml = new XMLSerializer().serializeToString(qrSvgElement);
+        const svg64 = btoa(unescape(encodeURIComponent(xml)));
+        const image64 = 'data:image/svg+xml;base64,' + svg64;
+
+        const img = new Image();
+        img.src = image64;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = 300;
+          canvas.height = 300;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, 300, 300);
+          ctx.drawImage(img, 0, 0, 300, 300);
+          const pngData = canvas.toDataURL('image/png');
+
+          doc.addImage(pngData, 'PNG', 20.3, 51.5, 45, 45);
+          
+          // Footer Security Text
+          doc.setFontSize(6);
+          doc.setTextColor(148, 163, 184);
+          doc.text(`STATIC PASS TOKEN: ${staticQrPayload}`, 42.8, 104, { align: 'center' });
+          doc.text('SCAN AT GYM TURNSTILE FOR ENTRY • AMRIT NAGAR BRANCH', 42.8, 108, { align: 'center' });
+
+          doc.save(`BodyFit_Pass_${passId}.pdf`);
+        };
+      } else {
+        doc.save(`BodyFit_Pass_${passId}.pdf`);
+      }
+
+    } catch (err) {
+      console.error(err);
+      window.print();
     }
-
-    const qrSvgContent = `
-      <svg viewBox="0 0 100 100">
-        <rect x="0" y="0" width="100" height="100" fill="#ffffff" rx="4" />
-        ${qrModules.map(m => `<rect x="${m.x}" y="${m.y}" width="${m.w}" height="${m.h}" fill="${m.fill}" />`).join('')}
-      </svg>
-    `;
-
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>BodyFit Pass - ${memberName}</title>
-          <style>
-            * { box-sizing: border-box; margin: 0; padding: 0; }
-            html, body {
-              width: 100%;
-              height: 100%;
-              max-height: 100vh;
-              overflow: hidden;
-              background-color: #020617;
-              color: #ffffff;
-              font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            @page {
-              size: portrait;
-              margin: 0;
-            }
-            .card {
-              width: 380px;
-              max-width: 90%;
-              background: #090d16;
-              border: 1px solid rgba(249, 115, 22, 0.5);
-              border-radius: 24px;
-              padding: 22px;
-              box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-              position: relative;
-              overflow: hidden;
-              page-break-inside: avoid;
-              break-inside: avoid;
-            }
-            .header {
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 16px;
-            }
-            .brand {
-              font-size: 16px;
-              font-weight: 900;
-              letter-spacing: 1px;
-              color: #ffffff;
-              text-transform: uppercase;
-              line-height: 1;
-            }
-            .sub {
-              font-size: 9px;
-              color: #f97316;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 2px;
-              margin-top: 2px;
-            }
-            .badge {
-              background: rgba(16, 185, 129, 0.2);
-              border: 1px solid rgba(16, 185, 129, 0.4);
-              color: #34d399;
-              font-size: 9px;
-              font-weight: 900;
-              padding: 4px 10px;
-              border-radius: 20px;
-              letter-spacing: 1px;
-            }
-            .member-section {
-              margin-bottom: 14px;
-            }
-            .label {
-              font-size: 9px;
-              color: #94a3b8;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 1px;
-              display: block;
-              margin-bottom: 2px;
-            }
-            .val-name {
-              font-size: 20px;
-              font-weight: 900;
-              color: #ffffff;
-              letter-spacing: -0.5px;
-            }
-            .grid {
-              display: flex;
-              justify-content: space-between;
-              margin-top: 10px;
-            }
-            .pass-id {
-              font-family: monospace;
-              color: #fbbf24;
-              font-weight: 700;
-              font-size: 13px;
-            }
-            .plan-name {
-              color: #ffffff;
-              font-weight: 700;
-              font-size: 13px;
-            }
-            .qr-box {
-              background: rgba(255, 255, 255, 0.95);
-              border-radius: 16px;
-              padding: 16px;
-              text-align: center;
-              margin: 14px 0;
-            }
-            .qr-box svg {
-              width: 155px;
-              height: 155px;
-              margin: 0 auto;
-              display: block;
-            }
-            .qr-cap {
-              font-size: 9px;
-              font-weight: 800;
-              color: #1e293b;
-              letter-spacing: 1px;
-              margin-top: 8px;
-              display: block;
-            }
-            .footer {
-              display: flex;
-              justify-content: space-between;
-              font-size: 10px;
-              color: #cbd5e1;
-              border-top: 1px solid rgba(255,255,255,0.1);
-              padding-top: 10px;
-              margin-top: 12px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="header">
-              <div>
-                <div class="brand">BODYFIT</div>
-                <div class="sub">Fitness Centre</div>
-              </div>
-              <div class="badge">● ACTIVE PASS</div>
-            </div>
-            
-            <div class="member-section">
-              <span class="label">MEMBER NAME</span>
-              <div class="val-name">${memberName}</div>
-              <div class="grid">
-                <div>
-                  <span class="label">PASS ID</span>
-                  <div class="pass-id">${passId}</div>
-                </div>
-                <div>
-                  <span class="label">PLAN TYPE</span>
-                  <div class="plan-name">${planName}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="qr-box">
-              ${qrSvgContent}
-              <span class="qr-cap">SCAN AT GYM TURNSTILE FOR ENTRY</span>
-            </div>
-
-            <div class="footer">
-              <span>📍 Amrit Nagar Branch</span>
-              <span>📅 Valid Till: ${formattedValidity}</span>
-            </div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 250);
-            };
-          </script>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
   };
 
   return (
@@ -440,16 +271,20 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
             )}
           </div>
 
-          {/* SVG QR Code for Turnstile Check-In (Bigger) */}
-          <div className="relative z-10 p-5 rounded-2xl bg-white/95 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-slate-950 shadow-xl">
-            <svg viewBox="0 0 100 100" className="w-36 h-36">
-              <rect x="0" y="0" width="100" height="100" fill="#ffffff" rx="4" />
-              {qrModules.map((m, idx) => (
-                <rect key={idx} x={m.x} y={m.y} width={m.w} height={m.h} fill={m.fill} />
-              ))}
-            </svg>
+          {/* Real SVG QR Code for Turnstile Check-In */}
+          <div className="relative z-10 p-5 rounded-2xl bg-white/95 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-slate-950 shadow-xl bodyfit-qr-container">
+            <QRCodeSVG 
+              value={staticQrPayload} 
+              size={144} 
+              level="M" 
+              includeMargin={true}
+              marginSize={2}
+            />
             <span className="text-[10px] font-extrabold tracking-wider uppercase text-slate-700">
               SCAN AT GYM TURNSTILE FOR ENTRY
+            </span>
+            <span className="text-[9px] font-mono text-slate-500 tracking-widest uppercase">
+              PASS TOKEN: {passId}
             </span>
           </div>
 
@@ -473,7 +308,7 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
             className="flex-1 py-3.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-colors border border-slate-700 shadow-md"
           >
             <Download className="w-4 h-4 text-orange-400" />
-            <span>Download Pass</span>
+            <span>Download Pass (.PDF)</span>
           </button>
           <button
             onClick={onClose}
@@ -499,3 +334,4 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
     </div>
   );
 }
+

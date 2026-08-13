@@ -86,11 +86,24 @@ export default function PassRecoveryModal({ isOpen, onClose, onPassRecovered }) 
       });
 
       if (matches.length > 0) {
-        const passes = matches.map((m, idx) => {
-          const mId = String(m?.id || `BF-${queryDigits ? queryDigits.slice(0, 6) : 849201 + idx}`);
+        // Deduplicate matches so duplicate bookings across local/cloud/stored pass are consolidated
+        const uniqueMatches = [];
+        const seenKeys = new Set();
+        for (const m of matches) {
+          const key = `${m?.id || ''}_${m?.service || ''}`.toLowerCase();
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            uniqueMatches.push(m);
+          }
+        }
+
+        const passes = uniqueMatches.map((m, idx) => {
+          const rawId = String(m?.id || `BF-${queryDigits ? queryDigits.slice(0, 6) : 849201 + idx}`);
+          const mId = (rawId.startsWith('BF-') ? rawId : `BF-${rawId}`).toUpperCase();
           return {
-            id: mId.startsWith('BF-') ? mId : `BF-${mId}`,
+            id: mId,
             service: String(m?.service || 'BodyFit Membership Pass'),
+            name: String(m?.name || m?.customerName || m?.customer?.name || ''),
             date: m?.date || 'Active',
             time: m?.time || '',
             trainer: m?.trainer || '',

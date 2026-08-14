@@ -138,14 +138,14 @@ export default function AdminDashboard({ onLogout, onExit }) {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <img alt="Gymnation" className="h-9 w-auto" src={logoImg} />
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <img alt="Gymnation" className="h-8 sm:h-9 w-auto" src={logoImg} />
             <div>
-              <div className="font-teko text-xl leading-none tracking-wide text-white">
+              <div className="font-teko text-lg sm:text-xl leading-none tracking-wide text-white">
                 OWNER <span className="text-orange-500">PANEL</span>
               </div>
-              <div className="mt-0.5 text-[11px] text-slate-500">
+              <div className="mt-0.5 text-[10px] sm:text-[11px] text-slate-500 truncate max-w-[160px] sm:max-w-none">
                 {session?.name ? `${session.name} · ` : ''}
                 {session?.email}
               </div>
@@ -154,29 +154,29 @@ export default function AdminDashboard({ onLogout, onExit }) {
 
           <div className="flex items-center gap-2">
             <button
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-800 px-3 py-2 text-xs font-semibold text-slate-400 transition-colors hover:text-white"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-slate-800 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold text-slate-400 transition-colors hover:text-white"
               onClick={onExit}
               type="button"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              View site
+              <span className="hidden xs:inline sm:inline">View site</span>
             </button>
             <button
-              className="inline-flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/20"
+              className="inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/20"
               onClick={handleLogout}
               type="button"
             >
               <LogOut className="h-3.5 w-3.5" />
-              Sign out
+              <span>Sign out</span>
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mx-auto flex max-w-7xl items-center gap-1 px-6">
+        {/* Tabs - Horizontally scrollable on mobile */}
+        <div className="mx-auto flex max-w-7xl items-center gap-1 px-3 sm:px-6 overflow-x-auto scrollbar-none whitespace-nowrap">
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
-              className={`-mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-colors ${
+              className={`-mb-px shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 sm:gap-2 border-b-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-bold transition-colors ${
                 tab === id
                   ? 'border-orange-500 text-white'
                   : 'border-transparent text-slate-500 hover:text-slate-300'
@@ -185,8 +185,8 @@ export default function AdminDashboard({ onLogout, onExit }) {
               onClick={() => setTab(id)}
               type="button"
             >
-              <Icon className="h-4 w-4" />
-              {label}
+              <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>{label}</span>
               {id === 'bookings' && pendingCount > 0 && (
                 <span className="rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-black text-amber-400">
                   {pendingCount}
@@ -202,7 +202,7 @@ export default function AdminDashboard({ onLogout, onExit }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
+      <main className="mx-auto max-w-7xl px-3 sm:px-6 py-6 sm:py-8 overflow-x-hidden">
         {tab === 'bookings' && (
           <>
             <div className="mb-6">

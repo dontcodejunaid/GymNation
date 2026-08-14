@@ -67,18 +67,18 @@ export default function Hero() {
         </div>
 
         {/* Absolute Top Left Corner TIPS Button */}
-        <div className="absolute top-3 left-4 sm:top-5 sm:left-8 z-30">
+        <div className="absolute top-2.5 left-2 sm:top-5 sm:left-8 z-30">
           <ShinyButton
             onClick={() => setIsNutritionModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-orange-600/40 backdrop-blur-xl transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer border border-orange-400/50"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-xl shadow-orange-600/40 backdrop-blur-xl transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer border border-orange-400/50"
           >
-            <Lightbulb className="w-4 h-4 text-white fill-white" />
-            <span className="font-black tracking-widest text-[11px] text-white">TIPS</span>
+            <Lightbulb className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+            <span className="font-black tracking-widest text-[10px] sm:text-[11px] text-white">TIPS</span>
           </ShinyButton>
         </div>
 
         {/* Absolute Top Right Corner REFER Button */}
-        <div className="absolute top-3 right-4 sm:top-5 sm:right-8 z-30">
+        <div className="absolute top-2.5 right-2 sm:top-5 sm:right-8 z-30">
           <a
             href="#referral-program"
             onClick={(e) => {
@@ -87,10 +87,10 @@ export default function Hero() {
             }}
           >
             <ShinyButton
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-xs uppercase tracking-wider shadow-xl shadow-orange-600/40 backdrop-blur-xl transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer border border-orange-400/50"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 hover:from-orange-500 hover:to-amber-400 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-xl shadow-orange-600/40 backdrop-blur-xl transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer border border-orange-400/50"
             >
-              <Gift className="w-4 h-4 text-white fill-white" />
-              <span className="font-black tracking-widest text-[11px] text-white">REFER</span>
+              <Gift className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-white" />
+              <span className="font-black tracking-widest text-[10px] sm:text-[11px] text-white">REFER</span>
             </ShinyButton>
           </a>
         </div>

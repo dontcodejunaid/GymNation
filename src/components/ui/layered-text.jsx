@@ -56,21 +56,21 @@ export function LayeredText({
   return (
     <div
       ref={containerRef}
-      className={`mx-auto py-4 font-teko tracking-wider uppercase text-white antialiased cursor-pointer ${className}`}
-      style={{ fontSize, "--md-font-size": fontSizeMd }}
+      className={`mx-auto py-2 sm:py-4 font-teko tracking-wider uppercase text-white antialiased cursor-pointer max-w-full overflow-hidden ${className}`}
+      style={{ fontSize: "clamp(26px, 7.5vw, 48px)" }}
     >
-      <ul className="list-none p-0 m-0 flex flex-col items-center">
+      <ul className="list-none p-0 m-0 flex flex-col items-center max-w-full">
         {lines.map((line, index) => {
           return (
             <li
               key={index}
-              className="overflow-hidden relative"
+              className="overflow-hidden relative max-w-full"
               style={{
                 height: `${lineHeight}px`,
               }}
             >
               <p
-                className="px-4 align-top whitespace-nowrap m-0 text-white font-black flex items-center justify-center"
+                className="px-2 sm:px-4 align-top whitespace-nowrap m-0 text-white font-black flex items-center justify-center"
                 style={{
                   height: `${lineHeight}px`,
                   lineHeight: `${lineHeight}px`,
@@ -79,7 +79,7 @@ export function LayeredText({
                 {line.top}
               </p>
               <p
-                className="px-4 align-top whitespace-nowrap m-0 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent font-black flex items-center justify-center"
+                className="px-2 sm:px-4 align-top whitespace-nowrap m-0 bg-gradient-to-r from-orange-400 via-amber-400 to-yellow-400 bg-clip-text text-transparent font-black flex items-center justify-center"
                 style={{
                   height: `${lineHeight}px`,
                   lineHeight: `${lineHeight}px`,

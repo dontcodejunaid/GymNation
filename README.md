@@ -22,6 +22,17 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 
 ---
 
+### 📍 Dedicated Contact & Live Location Hub
+> *Dedicated single-page contact view with direct front-desk calling, WhatsApp support, live interactive OpenStreetMap embed, operational shift timings, and quick inquiry dispatch.*
+
+- **📞 Direct Phone & WhatsApp**: One-tap phone call (`+91 97420 41444`) and pre-filled WhatsApp chat.
+- **✉️ Official Inquiries**: Support helpdesk integration (`support@gymnation.com`).
+- **🗺️ Interactive Map & Address**: Live map centered on Electronic City, Bengaluru with coordinates and member parking details.
+- **⏰ Operating Shift Hours**: Clearly displayed morning (`6:00 AM - 1:00 PM`) and evening (`5:00 PM - 10:00 PM`) timings.
+- **📝 Instant Message Form**: Quick inquiry submission with instant status feedback.
+
+---
+
 ### 📊 Health & Fitness Interactive Tools
 
 #### 🧮 Interactive BMI & Calorie Macro Calculator
@@ -74,6 +85,7 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 
 - **⚡ Fast & Modern UI**: Built with React 19 and Vite for instant load times and hot-module replacement (HMR).
 - **🎨 Glassmorphism & Sleek Dark Mode**: Micro-animations using Framer Motion and GSAP animations.
+- **📍 Dedicated Contact Hub**: Full contact page (`/contact`) featuring live location mapping, direct phone/WhatsApp links, working shifts, and message dispatch.
 - **📅 Interactive Booking Engine**: Reserve free trial passes or personal trainer slots with auto-generated booking IDs.
 - **📱 Instant WhatsApp Booking Alert**: Automatically formats and pre-fills WhatsApp messages for direct front-desk confirmation.
 - **📆 Calendar Export**: One-click download of `.ics` calendar events and direct Google Calendar integration.
@@ -162,14 +174,16 @@ BodyFit/
 │   │   ├── About.jsx      # Gym history & overview
 │   │   ├── BMICalculator.jsx # Health & macro tool
 │   │   ├── BookingForm.jsx  # Multi-step booking modal workflow
+│   │   ├── ContactPage.jsx  # Dedicated contact & live location hub
 │   │   ├── Facilities.jsx # Gym amenities showcase
+│   │   ├── Footer.jsx     # Global site footer with links & newsletter
 │   │   ├── Hero.jsx       # Landing page hero banner
 │   │   ├── MembershipPlans.jsx # Tiered pricing
 │   │   ├── ProgressTracker.jsx # Body measurement logger
 │   │   ├── Trainers.jsx   # Certified personal trainers list
 │   │   └── ...
 │   ├── context/           # React context providers
-│   ├── App.jsx            # Main app container
+│   ├── App.jsx            # Main app container & routing logic
 │   ├── main.jsx           # Entry point
 │   └── index.css          # Tailwind CSS configuration & global styles
 ├── package.json

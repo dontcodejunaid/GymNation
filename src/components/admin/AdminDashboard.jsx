@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  CalendarCheck, Settings2, BarChart3, LogOut, ExternalLink, MonitorSmartphone, CreditCard, Info, BellRing,
+  CalendarCheck, Settings2, BarChart3, LogOut, ExternalLink, MonitorSmartphone, CreditCard, Info, BellRing, Tag,
 } from 'lucide-react';
 import BookingsPanel from './BookingsPanel';
 import MembershipsPanel from './MembershipsPanel';
@@ -8,6 +8,7 @@ import RenewalsPanel from './RenewalsPanel';
 import ManagePanel from './ManagePanel';
 import AnalyticsPanel from './AnalyticsPanel';
 import AboutPanel from './AboutPanel';
+import OfferPanel from './OfferPanel';
 
 import {
   getBookings, bucketOf, getMemberSignups, saveMemberSignups, effectiveMembershipStatus,
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'bookings', label: 'Bookings', icon: CalendarCheck },
   { id: 'memberships', label: 'Memberships', icon: CreditCard },
   { id: 'renewals', label: 'Renewals', icon: BellRing },
+  { id: 'offer', label: 'Special Offer', icon: Tag },
   { id: 'manage', label: 'Manage', icon: Settings2 },
   { id: 'about', label: 'About Us', icon: Info },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -258,6 +260,10 @@ export default function AdminDashboard({ onLogout, onExit }) {
               signups={memberSignups}
             />
           </>
+        )}
+
+        {tab === 'offer' && (
+          <OfferPanel />
         )}
 
         {tab === 'manage' && (

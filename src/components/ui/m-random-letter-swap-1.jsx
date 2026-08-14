@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Menu, X, Phone, Calculator, QrCode } from "lucide-react";
+import { Menu, X, Phone, Calculator, QrCode, User } from "lucide-react";
 import { RandomLetterSwap } from "./random-letter-swap";
 import { WhatsAppIcon } from "./social-icons";
 import { LiquidMetalButton } from "./liquid-metal-button";
@@ -26,7 +26,7 @@ const trackedSections = [
   "#contact"
 ];
 
-export default function RandomLetterSwapNav({ onOpenRecovery }) {
+export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("#home");
@@ -133,6 +133,20 @@ export default function RandomLetterSwapNav({ onOpenRecovery }) {
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Cult.fit Style Login / Signup Modal Button */}
+          {onOpenAuth && (
+            <button
+              aria-label="Login or Sign Up"
+              title="Member Login & Sign Up"
+              className="flex h-10 items-center justify-center gap-1.5 px-3 rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 text-xs font-bold uppercase tracking-wider transition-all duration-300 hover:border-orange-500/50 hover:bg-orange-500/20 hover:text-white active:scale-95 cursor-pointer"
+              onClick={onOpenAuth}
+              type="button"
+            >
+              <User className="h-[16px] w-[16px] text-orange-400" />
+              <span className="hidden sm:inline">LOGIN</span>
+            </button>
+          )}
+
           {/* Find Pass / Digital Pass Recovery Button */}
           {onOpenRecovery && (
             <button

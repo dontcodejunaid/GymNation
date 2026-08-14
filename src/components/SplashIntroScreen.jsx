@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import faviconImg from '/favicon.png';
 import logoImg from '../assets/logo.png';
 
@@ -6,18 +6,23 @@ export default function SplashIntroScreen({ onFinish }) {
   const [isFading, setIsFading] = useState(false);
   const [isDone, setIsDone] = useState(false);
 
+  const onFinishRef = useRef(onFinish);
+  useEffect(() => {
+    onFinishRef.current = onFinish;
+  }, [onFinish]);
+
   useEffect(() => {
     // Show opening animated logo for 2 seconds then fade out
     const timer = setTimeout(() => {
       setIsFading(true);
       setTimeout(() => {
         setIsDone(true);
-        if (onFinish) onFinish();
+        if (onFinishRef.current) onFinishRef.current();
       }, 700); // 700ms exit fade
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, []);
 
   if (isDone) return null;
 

@@ -15,6 +15,7 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, updateProfile } from 'firebase/auth';
 import { INITIAL_TRAINERS } from './data/trainersAndScheduleData';
 import { DEFAULT_MEMBERSHIP_PLANS } from './data/membershipPlans';
 import { hasPassPrefix } from './utils/passId';
@@ -39,12 +40,14 @@ const firebaseConfig = {
 // Initialize Firebase App & Firestore Database safely
 let app = null;
 let db = null;
+let auth = null;
 let analytics = null;
 
 if (isFirebaseConfigured) {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
 
     if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
       isSupported().then((supported) => {
@@ -64,7 +67,46 @@ if (isFirebaseConfigured) {
   );
 }
 
-export { app, db, analytics };
+export { app, db, auth, analytics };
+
+/**
+ * Perform real Google Auth Sign-In with Popup via Firebase
+ */
+export async function signInWithGooglePopup() {
+  if (!app) {
+    throw new Error('Firebase is not configured. Check environment variables.');
+  }
+  const authObj = auth || getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const result = await signInWithPopup(authObj, provider);
+  return result.user;
+}
+
+/**
+ * Perform Firebase Authentication for Phone / Email sign-ups
+ */
+export async function authenticateUserWithFirebase(userProfile) {
+  if (!app) return null;
+  const authObj = auth || getAuth(app);
+
+  try {
+    const userCredential = await signInAnonymously(authObj);
+    const firebaseUser = userCredential.user;
+
+    const displayName = userProfile.name || userProfile.phone || userProfile.email || 'GymNation Member';
+    await updateProfile(firebaseUser, { displayName });
+
+    console.info(`[FIREBASE AUTH] Registered user in Firebase Authentication: ${firebaseUser.uid}`);
+    return {
+      uid: firebaseUser.uid,
+      displayName: firebaseUser.displayName,
+    };
+  } catch (err) {
+    console.warn('Firebase Auth user registration notice:', err.message);
+    return null;
+  }
+}
 
 const BOOKINGS_COLLECTION = 'bookings';
 const REVIEWS_COLLECTION = 'reviews';
@@ -74,6 +116,81 @@ const MEMBERSHIPS_COLLECTION = 'memberships';
 // catalogue; this one holds the people on those plans.
 const MEMBER_SIGNUPS_COLLECTION = 'membershipSignups';
 const NEWSLETTER_COLLECTION = 'newsletterSubscribers';
+const USERS_COLLECTION = 'users';
+const GYMNATION_USERS_COLLECTION = 'gymnation_users';
+
+/**
+ * Save or update signed-up user profile in Firebase Firestore (collections: 'membershipSignups', 'gymnation_users', and 'users')
+ */
+export async function saveUserToFirebase(userProfile) {
+  if (!userProfile) return null;
+  
+  try {
+    // Prioritize member name, email or phone slug for human-readable Document IDs in Firestore
+    const nameSlug = (userProfile.name && userProfile.name !== 'GymNation Athlete' && userProfile.name !== 'GymNation Member')
+      ? userProfile.name
+      : (userProfile.email || userProfile.phone || userProfile.uid || `user-${Date.now()}`);
+
+    const cleanDocId = nameSlug
+      .toString()
+      .trim()
+      .replace(/\+/g, '')
+      .replace(/@/g, '-at-')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase() || `member-${Date.now()}`;
+
+    if (db) {
+      const record = {
+        uid: userProfile.uid || cleanDocId,
+        id: cleanDocId,
+        memberName: userProfile.name || 'GymNation Member',
+        name: userProfile.name || 'GymNation Member',
+        phone: userProfile.phone || '',
+        email: userProfile.email || '',
+        authProvider: userProfile.provider || 'Phone/OTP',
+        provider: userProfile.provider || 'Phone/OTP',
+        planName: 'Free Access / Member Sign-up',
+        status: 'Active',
+        createdAt: userProfile.createdAt || new Date().toISOString(),
+        signedUpAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // 1. Write to 'membershipSignups' collection (guaranteed allowed in existing Firestore rules)
+      try {
+        const signupRef = doc(db, MEMBER_SIGNUPS_COLLECTION, cleanDocId);
+        await setDoc(signupRef, record, { merge: true });
+        console.info(`[FIREBASE FIRESTORE] Saved to 'membershipSignups': ${cleanDocId}`);
+      } catch (e1) {
+        console.warn('Firestore membershipSignups write notice:', e1.message);
+      }
+
+      // 2. Write to 'gymnation_users' collection
+      try {
+        const gymnationUserRef = doc(db, GYMNATION_USERS_COLLECTION, cleanDocId);
+        await setDoc(gymnationUserRef, record, { merge: true });
+        console.info(`[FIREBASE FIRESTORE] Saved to 'gymnation_users': ${cleanDocId}`);
+      } catch (e2) {
+        console.warn('Firestore gymnation_users write notice:', e2.message);
+      }
+
+      // 3. Write to 'users' collection
+      try {
+        const userDocRef = doc(db, USERS_COLLECTION, cleanDocId);
+        await setDoc(userDocRef, record, { merge: true });
+      } catch (e3) {
+        console.warn('Firestore users write notice:', e3.message);
+      }
+
+      return record;
+    }
+  } catch (err) {
+    console.warn('Failed to save user profile to Firebase Firestore:', err.message);
+  }
+  return null;
+}
 
 // Helper to create clean document ID for newsletter subscribers (e.g. "you@example.com" -> "you-at-example-com")
 function getNewsletterDocId(email) {

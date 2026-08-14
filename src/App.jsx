@@ -24,6 +24,8 @@ import PaymentModal from './components/PaymentModal';
 import DigitalMemberCardModal from './components/DigitalMemberCardModal';
 import AnalyticsDashboardModal from './components/AnalyticsDashboardModal';
 import PassRecoveryModal from './components/PassRecoveryModal';
+import GymNationAuthModal from './components/GymNationAuthModal';
+import LegalModal from './components/LegalModal';
 
 import { trackEvent } from './utils/analytics';
 import { saveBooking } from './utils/localStorage';
@@ -42,8 +44,21 @@ function App() {
   const [activeMemberPass, setActiveMemberPass] = useState(null);
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState('terms');
+
+  const handleOpenLegal = (tab = 'terms') => {
+    setLegalModalTab(tab);
+    setIsLegalModalOpen(true);
+  };
+
+  // Trigger Auth Modal right after Splash animation ends
+  const handleSplashFinish = () => {
+    setIsAuthModalOpen(true);
+  };
 
   useEffect(() => {
     trackEvent('PAGE_VIEW');
@@ -133,12 +148,15 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-orange-500 selection:text-white">
       {/* Splash Opening Landing Screen on Reload */}
-      <SplashIntroScreen />
+      <SplashIntroScreen onFinish={handleSplashFinish} />
 
       {/* Offers & Seasonal Discount Banner */}
       <OffersBanner onClaimOffer={handleClaimOffer} />
 
-      <RandomLetterSwapNav onOpenRecovery={() => setIsRecoveryModalOpen(true)} />
+      <RandomLetterSwapNav
+        onOpenRecovery={() => setIsRecoveryModalOpen(true)}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+      />
       <Hero />
       <About />
       <BMICalculator />
@@ -155,7 +173,7 @@ function App() {
       <Testimonials />
       <ProgressTracker />
       <BookingForm selectedPlan={selectedPlan} selectedClass={_selectedClass} onClearPlan={() => setSelectedPlan(null)} onClearClass={() => setSelectedClass(null)} />
-      <Footer />
+      <Footer onOpenLegal={handleOpenLegal} />
 
       {/* Integrated Floating Action Stack */}
       <FloatingActions
@@ -167,6 +185,26 @@ function App() {
       <AdminPortal />
 
       {/* Modals */}
+      <GymNationAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          try {
+            sessionStorage.setItem('gymnation_auth_dismissed', 'true');
+          } catch (e) {}
+        }}
+        onLoginSuccess={() => {
+          setIsAuthModalOpen(false);
+        }}
+        onOpenLegal={handleOpenLegal}
+      />
+
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        onClose={() => setIsLegalModalOpen(false)}
+        defaultTab={legalModalTab}
+      />
+
       <PaymentModal
         plan={selectedPlan}
         discountPercent={appliedDiscount}

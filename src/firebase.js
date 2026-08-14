@@ -1073,3 +1073,80 @@ export function subscribeToAboutFromFirebase(callback) {
   }
 }
 
+// ----------------------------------------------------
+// SPECIAL OFFER SETTINGS FIRESTORE INTEGRATION
+// ----------------------------------------------------
+
+export async function getOfferFromFirebase() {
+  if (!db) return null;
+  try {
+    const docRef = doc(db, 'settings', 'offer');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return null;
+  } catch (err) {
+    console.warn('Error fetching Offer data from Firebase:', err);
+    return null;
+  }
+}
+
+export async function saveOfferToFirebase(offerData) {
+  if (!db) return false;
+  try {
+    const docRef = doc(db, 'settings', 'offer');
+    await setDoc(docRef, { ...offerData, updatedAt: new Date().toISOString() });
+    return true;
+  } catch (err) {
+    console.warn('Error saving Offer data to Firebase:', err);
+    return false;
+  }
+}
+
+export function subscribeToOfferFromFirebase(callback) {
+  if (!db) return () => {};
+  try {
+    const docRef = doc(db, 'settings', 'offer');
+    return onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        callback(snap.data());
+      }
+    }, (err) => {
+      console.warn('Offer snapshot error:', err);
+    });
+  } catch (err) {
+    console.warn('Offer snapshot setup failed:', err);
+    return () => {};
+  }
+}
+
+export async function getDefaultOfferFromFirebase() {
+  if (!db) return null;
+  try {
+    const docRef = doc(db, 'settings', 'default_offer');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return null;
+  } catch (err) {
+    console.warn('Error fetching Default Offer from Firebase:', err);
+    return null;
+  }
+}
+
+export async function saveDefaultOfferToFirebase(defaultOfferData) {
+  if (!db) return false;
+  try {
+    const docRef = doc(db, 'settings', 'default_offer');
+    await setDoc(docRef, { ...defaultOfferData, updatedAt: new Date().toISOString() });
+    return true;
+  } catch (err) {
+    console.warn('Error saving Default Offer to Firebase:', err);
+    return false;
+  }
+}
+
+
+

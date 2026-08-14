@@ -17,6 +17,24 @@ export const STORE_KEYS = {
   MEMBERSHIPS: 'gymnation_memberships',
   ABOUT: 'gymnation_about_data',
   MEMBER_SIGNUPS: 'gymnation_member_signups',
+  OFFER: 'gymnation_special_offer',
+  DEFAULT_OFFER: 'gymnation_custom_default_offer',
+};
+
+export const DEFAULT_OFFER_DATA = {
+  enabled: true,
+  badgeText: 'SPECIAL OFFER',
+  title: '🎉 NEW YEAR TRANSFORM:',
+  highlightText: '20% OFF ALL ANNUAL PLANS',
+  subText: '+ FREE 1-ON-1 PT SESSION!',
+  buttonText: 'Claim 20% Off',
+  promoCode: 'FIT2026',
+  discountPercent: 20,
+  timerDays: 2,
+  timerHours: 14,
+  timerMinutes: 32,
+  timerSeconds: 45,
+  targetEndDate: '',
 };
 
 export const INITIAL_ABOUT_DATA = {
@@ -115,7 +133,7 @@ function read(key, fallback = []) {
     const raw = localStorage.getItem(key);
     if (!raw) return fallback;
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : fallback;
+    return (parsed !== null && parsed !== undefined) ? parsed : fallback;
   } catch (error) {
     console.error(`Error reading ${key}:`, error);
     return fallback;
@@ -438,4 +456,69 @@ export function resetAboutData() {
   }
   return updated;
 }
+
+/* ---------------------------- Special Offer ----------------------------- */
+
+export function computeOfferExpiryTimestamp(offerData) {
+  if (!offerData) return Date.now();
+  if (offerData.targetEndDate) {
+    const ts = new Date(offerData.targetEndDate).getTime();
+    if (!isNaN(ts)) return ts;
+  }
+  const days = Number(offerData.timerDays || 0);
+  const hours = Number(offerData.timerHours || 0);
+  const minutes = Number(offerData.timerMinutes || 0);
+  const seconds = Number(offerData.timerSeconds || 0);
+  const totalSeconds = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+  return Date.now() + (totalSeconds * 1000);
+}
+
+export function getOfferData() {
+  const data = readSeeded(STORE_KEYS.OFFER, DEFAULT_OFFER_DATA);
+  return { ...DEFAULT_OFFER_DATA, ...data };
+}
+
+export function saveOfferData(data) {
+  const withTimestamp = {
+    ...data,
+    timerExpiryTimestamp: data.timerExpiryTimestamp || computeOfferExpiryTimestamp(data)
+  };
+  const updated = write(STORE_KEYS.OFFER, withTimestamp);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('gymnation_offer_updated'));
+  }
+  return updated;
+}
+
+export function getDefaultOfferData() {
+  const data = readSeeded(STORE_KEYS.DEFAULT_OFFER, DEFAULT_OFFER_DATA);
+  return { ...DEFAULT_OFFER_DATA, ...data };
+}
+
+export function setDefaultOfferData(data) {
+  const withTimestamp = {
+    ...data,
+    timerExpiryTimestamp: computeOfferExpiryTimestamp(data)
+  };
+  const updated = write(STORE_KEYS.DEFAULT_OFFER, withTimestamp);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('gymnation_default_offer_updated'));
+  }
+  return updated;
+}
+
+export function resetOfferData() {
+  const customDefault = getDefaultOfferData();
+  const resetWithNewTimestamp = {
+    ...customDefault,
+    timerExpiryTimestamp: computeOfferExpiryTimestamp(customDefault)
+  };
+  const updated = write(STORE_KEYS.OFFER, resetWithNewTimestamp);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('gymnation_offer_updated'));
+  }
+  return updated;
+}
+
+
 

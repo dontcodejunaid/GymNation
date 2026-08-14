@@ -59,7 +59,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     { code: '+65', label: 'Singapore (+65)', flag: '🇸🇬' },
   ];
 
-  // Reset modal state when opened
+  // Reset modal state and fetch latest Firestore profile when opened
   useEffect(() => {
     if (isOpen) {
       setStep('input');
@@ -69,29 +69,57 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
       setIsLoading(false);
       setPhoneConfirmationResult(null);
       
-      // Check if already logged in
+      // Load current cached user first
+      let active = null;
       try {
         const saved = localStorage.getItem('gymnation_user');
-        const user = saved ? JSON.parse(saved) : (currentUser || null);
-        setActiveUser(user);
-        if (user) {
+        active = saved ? JSON.parse(saved) : (currentUser || null);
+        setActiveUser(active);
+        if (active) {
           setProfileForm({
-            name: user.name || '',
-            phone: user.phone || '',
-            email: user.email || '',
-            dob: user.dob || '',
-            gender: user.gender || 'Prefer not to say',
-            bloodGroup: user.bloodGroup || '',
-            emergencyContact: user.emergencyContact || '',
-            address: user.address || '',
-            fitnessGoal: user.fitnessGoal || 'General Fitness',
-            height: user.height || '',
-            weight: user.weight || '',
-            photoURL: user.photoURL || ''
+            name: active.name || '',
+            phone: active.phone || '',
+            email: active.email || '',
+            dob: active.dob || '',
+            gender: active.gender || 'Prefer not to say',
+            bloodGroup: active.bloodGroup || '',
+            emergencyContact: active.emergencyContact || '',
+            address: active.address || '',
+            fitnessGoal: active.fitnessGoal || 'General Fitness',
+            height: active.height || '',
+            weight: active.weight || '',
+            photoURL: active.photoURL || ''
           });
         }
       } catch (e) {
         console.error(e);
+      }
+
+      // Fetch fresh remote profile from Firebase Firestore
+      if (active && (active.phone || active.email || active.uid)) {
+        const idToSearch = active.phone || active.email || active.uid;
+        getUserFromFirebase(idToSearch).then((remoteData) => {
+          if (remoteData) {
+            const merged = { ...active, ...remoteData };
+            setActiveUser(merged);
+            localStorage.setItem('gymnation_user', JSON.stringify(merged));
+            saveUserProfile(merged);
+            setProfileForm({
+              name: merged.name || '',
+              phone: merged.phone || '',
+              email: merged.email || '',
+              dob: merged.dob || '',
+              gender: merged.gender || 'Prefer not to say',
+              bloodGroup: merged.bloodGroup || '',
+              emergencyContact: merged.emergencyContact || '',
+              address: merged.address || '',
+              fitnessGoal: merged.fitnessGoal || 'General Fitness',
+              height: merged.height || '',
+              weight: merged.weight || '',
+              photoURL: merged.photoURL || ''
+            });
+          }
+        }).catch((err) => console.warn('Firestore refresh note:', err));
       }
     }
   }, [isOpen, currentUser]);

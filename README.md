@@ -13,12 +13,14 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 
 ---
 
-### 📍 Dedicated Contact Hub & Interactive Map
-> *Single-page compact Contact Hub featuring live OpenStreetMap integration (Electronic City, Bengaluru), direct front-desk phone dialing, WhatsApp trainer chat, email helpdesk, official morning/evening shift hours, and quick message submission.*
+### 📍 Dedicated Contact & Live Location Hub
+> *Dedicated single-page contact view with direct front-desk calling, WhatsApp support, live interactive OpenStreetMap embed, operational shift timings, and quick inquiry dispatch.*
 
-- **Location Coordinates**: `12.8360° N, 77.6572° E` (Electronic City, Bengaluru)
-- **Front Desk Support**: Direct calling & instant WhatsApp messaging
-- **Working Shifts**: Morning (6:00 AM – 1:00 PM) · Evening (5:00 PM – 10:00 PM)
+- **📞 Direct Phone & WhatsApp**: One-tap phone call (`+91 97420 41444`) and pre-filled WhatsApp trainer chat.
+- **✉️ Official Inquiries**: Support helpdesk integration (`support@gymnation.com`).
+- **🗺️ Interactive Map & Address**: Live map centered on Electronic City, Bengaluru (`12.8360° N, 77.6572° E`) with free member parking details.
+- **⏰ Operating Shift Hours**: Clearly displayed morning (`6:00 AM - 1:00 PM`) and evening (`5:00 PM - 10:00 PM`) timings.
+- **📝 Instant Message Form**: Quick inquiry submission with instant status feedback.
 
 ---
 
@@ -82,7 +84,7 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 ## ✨ Key Features
 
 - **⚡ Fast & Modern UI**: Built with React 19 and Vite for instant load times and hot-module replacement (HMR).
-- **🎨 Sleek Dark-Mode Design**: Rich gradients, micro-animations, and animated typography using Framer Motion and GSAP.
+- **🎨 Glassmorphism & Sleek Dark Mode**: Rich gradients, micro-animations, and animated typography using Framer Motion and GSAP.
 - **📍 Contact & Navigation Hub**: Dedicated `/contact` view with Carto/OpenStreetMap tiles, shift timings, direct contact channels, and community links.
 - **📅 Interactive Booking Engine**: Reserve free trial passes or personal trainer slots with auto-generated booking IDs.
 - **📱 Instant WhatsApp Alerts**: Automatically formats and pre-fills WhatsApp messages for direct front-desk confirmation.
@@ -205,12 +207,14 @@ BodyFit/
 │   │   ├── BookingForm.jsx  # Multi-step booking modal workflow
 │   │   ├── ContactPage.jsx  # Dedicated Contact Hub & Location component
 │   │   ├── Facilities.jsx # Gym amenities showcase
+│   │   ├── Footer.jsx     # Global site footer with links & newsletter
 │   │   ├── Hero.jsx       # Landing page hero banner
 │   │   ├── MembershipPlans.jsx # Tiered pricing
 │   │   ├── OffersBanner.jsx # Real-time countdown promotion bar
 │   │   ├── ProgressTracker.jsx # Body measurement logger
 │   │   ├── Trainers.jsx   # Certified personal trainers list
 │   │   └── ...
+│   ├── context/           # React context providers
 │   ├── utils/             # Helper utilities (Firebase auth, WhatsApp, notifications)
 │   ├── firebase.js        # Firebase Firestore & Auth integration
 │   ├── App.jsx            # Main app container & routing logic

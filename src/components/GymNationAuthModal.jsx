@@ -241,7 +241,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     const target = authMode === 'phone' ? formatWhatsAppNumber(phoneNumber) : WhatsAppConfig.ActiveNumber;
     const messageText = `🏋️ *GYMNATION VERIFICATION CODE*\n\nYour security OTP is: *${generatedOtp}*\n\nValid for 10 minutes. Please do not share this code with anyone.`;
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${target}&text=${encodeURIComponent(messageText)}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
   // Real Firebase Google Auth Sign-In with Popup

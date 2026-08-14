@@ -205,19 +205,20 @@ export async function saveUserToFirebase(userProfile) {
   if (!userProfile) return null;
   
   try {
-    // Prioritize member name, email or phone slug for human-readable Document IDs in Firestore
-    const nameSlug = (userProfile.name && userProfile.name !== 'GymNation Athlete' && userProfile.name !== 'GymNation Member')
-      ? userProfile.name
-      : (userProfile.email || userProfile.phone || userProfile.uid || `user-${Date.now()}`);
-
-    const cleanDocId = nameSlug
-      .toString()
-      .trim()
-      .replace(/\+/g, '')
-      .replace(/@/g, '-at-')
-      .replace(/[^a-zA-Z0-9_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase() || `member-${Date.now()}`;
+    // Deterministic Document ID based on Phone Number, Email, or UID (never purely random)
+    const cleanPhone = (userProfile.phone || '').replace(/\D/g, '').slice(-10);
+    const cleanEmail = (userProfile.email || '').toLowerCase().trim();
+    
+    let cleanDocId = '';
+    if (cleanPhone && cleanPhone.length >= 10) {
+      cleanDocId = `phone-${cleanPhone}`;
+    } else if (cleanEmail && cleanEmail.includes('@')) {
+      cleanDocId = `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}`;
+    } else if (userProfile.uid) {
+      cleanDocId = `uid-${userProfile.uid.replace(/[^a-zA-Z0-9_-]+/g, '-')}`;
+    } else {
+      cleanDocId = `member-${Date.now()}`;
+    }
 
     if (db) {
       const record = {
@@ -236,8 +237,8 @@ export async function saveUserToFirebase(userProfile) {
         fitnessGoal: userProfile.fitnessGoal || '',
         height: userProfile.height || '',
         weight: userProfile.weight || '',
-        authProvider: userProfile.provider || 'Phone/OTP',
-        provider: userProfile.provider || 'Phone/OTP',
+        authProvider: userProfile.provider || 'Phone',
+        provider: userProfile.provider || 'Phone',
         planName: userProfile.planName || 'Free Access / Member Sign-up',
         status: userProfile.status || 'Active',
         createdAt: userProfile.createdAt || new Date().toISOString(),
@@ -246,22 +247,21 @@ export async function saveUserToFirebase(userProfile) {
         updatedAt: new Date().toISOString()
       };
 
-      // 1. Write to 'membershipSignups' collection (guaranteed allowed in existing Firestore rules)
-      try {
-        const signupRef = doc(db, MEMBER_SIGNUPS_COLLECTION, cleanDocId);
-        await setDoc(signupRef, record, { merge: true });
-        console.info(`[FIREBASE FIRESTORE] Saved to 'membershipSignups': ${cleanDocId}`);
-      } catch (e1) {
-        console.warn('Firestore membershipSignups write notice:', e1.message);
-      }
-
-      // 2. Write to 'gymnation_users' collection
+      // 1. Write to 'gymnation_users' collection
       try {
         const gymnationUserRef = doc(db, GYMNATION_USERS_COLLECTION, cleanDocId);
         await setDoc(gymnationUserRef, record, { merge: true });
         console.info(`[FIREBASE FIRESTORE] Saved to 'gymnation_users': ${cleanDocId}`);
       } catch (e2) {
         console.warn('Firestore gymnation_users write notice:', e2.message);
+      }
+
+      // 2. Write to 'membershipSignups' collection
+      try {
+        const signupRef = doc(db, MEMBER_SIGNUPS_COLLECTION, cleanDocId);
+        await setDoc(signupRef, record, { merge: true });
+      } catch (e1) {
+        console.warn('Firestore membershipSignups write notice:', e1.message);
       }
 
       // 3. Write to 'users' collection
@@ -287,31 +287,48 @@ export async function getUserFromFirebase(identifier) {
   if (!db || !identifier) return null;
 
   try {
-    const cleanId = identifier
-      .toString()
-      .trim()
-      .replace(/\+/g, '')
-      .replace(/@/g, '-at-')
-      .replace(/[^a-zA-Z0-9_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .toLowerCase();
+    const rawStr = identifier.toString().trim();
+    const cleanDigits = rawStr.replace(/\D/g, '').slice(-10);
+    const cleanEmail = rawStr.toLowerCase();
 
-    // 1. Check gymnation_users by docId
-    const directDoc = await getDoc(doc(db, GYMNATION_USERS_COLLECTION, cleanId));
-    if (directDoc.exists()) {
-      return directDoc.data();
+    // Check candidate doc IDs
+    const candidateIds = [
+      cleanDigits && cleanDigits.length >= 10 ? `phone-${cleanDigits}` : null,
+      cleanEmail.includes('@') ? `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}` : null,
+      `uid-${rawStr.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
+      rawStr.replace(/\+/g, '').replace(/@/g, '-at-').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase()
+    ].filter(Boolean);
+
+    for (const docId of candidateIds) {
+      try {
+        const directDoc = await getDoc(doc(db, GYMNATION_USERS_COLLECTION, docId));
+        if (directDoc.exists() && directDoc.data()) {
+          return directDoc.data();
+        }
+      } catch (e) {}
+
+      try {
+        const signupDoc = await getDoc(doc(db, MEMBER_SIGNUPS_COLLECTION, docId));
+        if (signupDoc.exists() && signupDoc.data()) {
+          return signupDoc.data();
+        }
+      } catch (e) {}
     }
 
-    // 2. Check membershipSignups by docId
-    const signupDoc = await getDoc(doc(db, MEMBER_SIGNUPS_COLLECTION, cleanId));
-    if (signupDoc.exists()) {
-      return signupDoc.data();
-    }
-
-    // 3. Fallback: check users collection
-    const userDoc = await getDoc(doc(db, USERS_COLLECTION, cleanId));
-    if (userDoc.exists()) {
-      return userDoc.data();
+    // Also scan gymnation_users collection by phone number field match if doc ID didn't hit
+    if (cleanDigits && cleanDigits.length >= 10) {
+      try {
+        const querySnapshot = await getDocs(collection(db, GYMNATION_USERS_COLLECTION));
+        for (const docItem of querySnapshot.docs) {
+          const data = docItem.data();
+          const itemDigits = (data.phone || '').replace(/\D/g, '').slice(-10);
+          if (itemDigits === cleanDigits) {
+            return data;
+          }
+        }
+      } catch (scanErr) {
+        console.warn('Firestore scan note:', scanErr.message);
+      }
     }
   } catch (err) {
     console.warn('Firebase user fetch notice:', err.message);

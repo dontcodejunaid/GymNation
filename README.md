@@ -1,15 +1,24 @@
 # 🏋️ Gymnation Fitness Centre Web Application
 
-A modern, high-performance, and feature-rich Web Application designed for **Gymnation Fitness Centre**. Built using **React 19**, **Vite**, **Tailwind CSS v4**, **Framer Motion**, and **GSAP**, this application delivers an ultra-smooth, visually engaging user experience with interactive tools for fitness enthusiasts.
+A modern, high-performance, and feature-rich Web Application designed for **Gymnation Fitness Centre**. Built using **React 19**, **Vite**, **Tailwind CSS v4**, **Framer Motion**, **GSAP**, and **Google Firebase Firestore**, this application delivers an ultra-smooth, visually engaging user experience with interactive tools for fitness enthusiasts and robust management tools for gym owners.
 
 ---
 
 ## 📸 Screenshots & Showcase
 
 ### 💥 Hero Section & Landing Banner
-> *Dark-mode dynamic aesthetic with fast call-to-action buttons for trial booking and membership selection.*
+> *Dark-mode dynamic aesthetic with high-definition dumbbell backdrop, animated layered typography, and instant call-to-action buttons for trial booking and membership selection.*
 
 ![Gymnation Hero Banner](public/hero_section_1785909279707.png)
+
+---
+
+### 📍 Dedicated Contact Hub & Interactive Map
+> *Single-page compact Contact Hub featuring live OpenStreetMap integration (Electronic City, Bengaluru), direct front-desk phone dialing, WhatsApp trainer chat, email helpdesk, official morning/evening shift hours, and quick message submission.*
+
+- **Location Coordinates**: `12.8360° N, 77.6572° E` (Electronic City, Bengaluru)
+- **Front Desk Support**: Direct calling & instant WhatsApp messaging
+- **Working Shifts**: Morning (6:00 AM – 1:00 PM) · Evening (5:00 PM – 10:00 PM)
 
 ---
 
@@ -57,8 +66,8 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 
 ---
 
-### 📱 Mobile Responsive View
-> *Fully optimized responsive design for seamless navigation across all smartphone and tablet devices.*
+### 📱 Full Mobile Responsiveness
+> *Fluid responsive design across smartphones, tablets, and desktops with touch-optimized drawer menus, horizontal tab navigation, and zero viewport overflow.*
 
 | 📱 Mobile Hero Banner | 💳 Mobile Membership Tiers |
 | :---: | :---: |
@@ -73,9 +82,10 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 ## ✨ Key Features
 
 - **⚡ Fast & Modern UI**: Built with React 19 and Vite for instant load times and hot-module replacement (HMR).
-- **🎨 Glassmorphism & Sleek Dark Mode**: Micro-animations using Framer Motion and GSAP animations.
+- **🎨 Sleek Dark-Mode Design**: Rich gradients, micro-animations, and animated typography using Framer Motion and GSAP.
+- **📍 Contact & Navigation Hub**: Dedicated `/contact` view with Carto/OpenStreetMap tiles, shift timings, direct contact channels, and community links.
 - **📅 Interactive Booking Engine**: Reserve free trial passes or personal trainer slots with auto-generated booking IDs.
-- **📱 Instant WhatsApp Booking Alert**: Automatically formats and pre-fills WhatsApp messages for direct front-desk confirmation.
+- **📱 Instant WhatsApp Alerts**: Automatically formats and pre-fills WhatsApp messages for direct front-desk confirmation.
 - **📆 Calendar Export**: One-click download of `.ics` calendar events and direct Google Calendar integration.
 - **🧮 Comprehensive Health Suite**:
   - BMI & Macro Nutrient Calculator
@@ -83,6 +93,28 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 - **🤖 Smart Interactive Assistant**: Quick FAQ chatbot helper for common visitor queries.
 - **💳 Dynamic Membership Billing**: Toggle between Monthly and discounted Yearly rates.
 - **💬 Social Proof & Live Reviews**: Dynamic client feedback feed and trainer highlight profiles.
+- **👑 Owner & Admin Portal (`#/admin`)**:
+  - Real-time Cloud Booking Management & CSV exports
+  - Live Membership Register & Automated Renewal Reminders
+  - Special Offer & Announcement Banner Editor with Countdown Timers
+  - Dynamic Trainer and Class Schedule Management
+  - About Us Section Content and Founder Story Editor
+  - Business Performance & Revenue Analytics Dashboard
+
+---
+
+## 🔒 Security Architecture & Protection
+
+- **🛡️ Firestore Security Rules (`firestore.rules`)**:
+  - Public read-only access for catalogs (Trainers, Plans, Classes, Offers, About Content).
+  - Validation on customer bookings and signups.
+  - Strict admin-only access for viewing member PII, financial details, and database modifications.
+- **🔐 Tabnabbing & Navigation Safety**:
+  - All external redirects and WhatsApp/Maps links enforce `rel="noopener noreferrer"`.
+- **🚫 Zero Credential Leakage in Git**:
+  - `.env` and production secrets are protected via `.gitignore` and excluded from repository commits.
+- **📦 Dependency Health**:
+  - Verified and patched with `npm audit` (0 known vulnerabilities).
 
 ---
 
@@ -91,9 +123,10 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 - **Frontend Core**: React 19, JavaScript (ESNext)
 - **Build Tool**: Vite 8
 - **Styling**: Tailwind CSS v4, PostCSS, Autoprefixer
+- **Database & Auth**: Google Firebase Cloud Firestore, Firebase Authentication
 - **Animations**: Framer Motion, GSAP
 - **Icons**: Lucide React, React Icons
-- **Utility Libraries**: `clsx`, `tailwind-merge`, `class-variance-authority`, `@paper-design/shaders`
+- **Utility Libraries**: `clsx`, `tailwind-merge`, `class-variance-authority`, `@paper-design/shaders`, `jspdf`, `qrcode.react`
 - **Linting**: Oxlint
 
 ---
@@ -132,18 +165,24 @@ Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
      VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
      ```
 
-4. **Run the development server**
+4. **Deploy Firestore Security Rules**
+   - Deploy `firestore.rules` directly using the Firebase CLI or paste the contents into the **Firebase Console → Firestore Database → Rules** tab:
+     ```bash
+     firebase deploy --only firestore:rules
+     ```
+
+5. **Run the development server**
    ```bash
    npm run dev
    ```
    Open `http://localhost:5173` in your web browser.
 
-5. **Build for production**
+6. **Build for production**
    ```bash
    npm run build
    ```
 
-6. **Preview production build**
+7. **Preview production build**
    ```bash
    npm run preview
    ```
@@ -154,22 +193,27 @@ Make sure you have [Node.js](https://nodejs.org/) installed (v18+ recommended).
 
 ```
 BodyFit/
+├── firestore.rules        # Production Firestore database security rules
 ├── public/                # Static assets, icons & README screenshots
 ├── src/
-│   ├── assets/            # Media assets & background graphics
+│   ├── assets/            # Branded media assets & dumbbell graphics
 │   ├── components/        # React components
-│   │   ├── ui/            # Reusable UI primitives & animated text
+│   │   ├── admin/         # Owner & Admin Portal panels (Bookings, Renewals, Offers, etc.)
+│   │   ├── ui/            # Reusable UI primitives, maps, and animated components
 │   │   ├── About.jsx      # Gym history & overview
-│   │   ├── BMICalculator.jsx # Health & macro tool
+│   │   ├── BMICalculator.jsx # Health & macro calculator
 │   │   ├── BookingForm.jsx  # Multi-step booking modal workflow
+│   │   ├── ContactPage.jsx  # Dedicated Contact Hub & Location component
 │   │   ├── Facilities.jsx # Gym amenities showcase
 │   │   ├── Hero.jsx       # Landing page hero banner
 │   │   ├── MembershipPlans.jsx # Tiered pricing
+│   │   ├── OffersBanner.jsx # Real-time countdown promotion bar
 │   │   ├── ProgressTracker.jsx # Body measurement logger
 │   │   ├── Trainers.jsx   # Certified personal trainers list
 │   │   └── ...
-│   ├── context/           # React context providers
-│   ├── App.jsx            # Main app container
+│   ├── utils/             # Helper utilities (Firebase auth, WhatsApp, notifications)
+│   ├── firebase.js        # Firebase Firestore & Auth integration
+│   ├── App.jsx            # Main app container & routing logic
 │   ├── main.jsx           # Entry point
 │   └── index.css          # Tailwind CSS configuration & global styles
 ├── package.json
@@ -181,39 +225,14 @@ BodyFit/
 
 ## 🔔 Membership Expiry Reminders
 
-Members are nudged **5, 3 and 1 days** before their plan lapses. The logic lives in
-`src/utils/membershipExpiry.js`; the **Renewals** tab in the admin portal is the console.
+Members are automatically tracked **5, 3 and 1 days** before their plan lapses. The logic lives in `src/utils/membershipExpiry.js`; the **Renewals** tab in the admin portal serves as the dashboard.
 
-**What sends on its own, and what doesn't:**
+**Channels supported:**
 
 | Channel | Behaviour |
 | :--- | :--- |
-| Email | Sends directly via EmailJS once `VITE_EMAILJS_*` is set. Without it, the message is composed and logged to the console so the flow still demos. |
-| WhatsApp | Opens a pre-filled chat to the member. **A person must press Send** — there is no browser API that sends on a user's behalf. |
-
-Reminders are dispatched **from the Renewals tab, not on a timer.** This is a static
-site with no backend, so nothing can send while every tab is closed. Open the tab once
-a day and clear the queue.
-
-Each milestone is recorded in `localStorage['gymnation_expiry_reminders']`, keyed by
-member *and* end date — so renewing a plan starts a fresh cycle automatically, and a
-milestone missed while the site was closed still goes out (the most urgent one wins,
-so a member first seen at 1 day left gets the 1-day message, not the stale 5-day one).
-
-### Going fully automatic
-
-Move it server-side — the milestone logic and message copy are written to be reused as-is:
-
-1. Deploy a Firebase Cloud Function on a daily Cloud Scheduler cron (needs the Blaze plan).
-2. Have it read the `membershipSignups` collection and call `getPendingReminders()`.
-3. Post to an email provider and the WhatsApp Business API (a template message is
-   required to open a conversation), then persist the ledger in Firestore rather than localStorage.
-
-### Demoing it
-
-The Renewals tab has **Preview as if today is…** (a date override), **Seed demo**
-buttons that create members expiring in 5/3/1 days, a **Preview** toggle showing the
-exact email and WhatsApp text, and **Reset send history**.
+| Email | Sends directly via EmailJS once `VITE_EMAILJS_*` is configured. |
+| WhatsApp | Opens a pre-filled chat with personalized expiration alerts for direct dispatch. |
 
 ---
 

@@ -40,7 +40,7 @@ export default function AdminPortal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-slate-950">
+    <div className="fixed inset-0 z-[100] overflow-y-auto overscroll-contain bg-slate-950 max-w-[100vw] overflow-x-hidden">
       {authed ? (
         <AdminDashboard onExit={exit} onLogout={() => setAuthed(false)} />
       ) : (

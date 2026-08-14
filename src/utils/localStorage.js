@@ -123,17 +123,34 @@ export function getUserProfiles() {
   }
 }
 
-export function saveUserProfile(phone, name, email = '') {
-  if (!phone || !name) return;
+export function saveUserProfile(userProfileOrPhone, maybeName = '', maybeEmail = '') {
+  if (!userProfileOrPhone) return;
   const profiles = getUserProfiles();
-  const digits = phone.replace(/\D/g, '').slice(-10);
-  if (!digits) return;
 
-  profiles[digits] = {
-    name: name.trim(),
-    phone: phone.trim(),
-    email: email.trim(),
-    updatedAt: new Date().toISOString()
+  let profileData = {};
+  let key = '';
+
+  if (typeof userProfileOrPhone === 'object') {
+    profileData = { ...userProfileOrPhone, updatedAt: new Date().toISOString() };
+    const phoneOrId = profileData.phone || profileData.email || profileData.uid || 'user';
+    key = phoneOrId.toString().replace(/\D/g, '').slice(-10) || phoneOrId;
+  } else {
+    const phone = userProfileOrPhone;
+    const name = maybeName;
+    const email = maybeEmail;
+    key = phone.replace(/\D/g, '').slice(-10);
+    profileData = {
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email.trim(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  if (!key) return;
+  profiles[key] = {
+    ...(profiles[key] || {}),
+    ...profileData
   };
 
   try {
@@ -143,9 +160,30 @@ export function saveUserProfile(phone, name, email = '') {
   }
 }
 
-export function findUserProfileByPhone(phone) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '').slice(-10);
+export function findUserProfile(identifier) {
+  if (!identifier) return null;
   const profiles = getUserProfiles();
-  return profiles[digits] || null;
+  
+  // Direct key check
+  if (profiles[identifier]) return profiles[identifier];
+
+  // Check by last 10 digits of phone
+  const cleanPhone = identifier.toString().replace(/\D/g, '').slice(-10);
+  if (cleanPhone && profiles[cleanPhone]) return profiles[cleanPhone];
+
+  // Search by email or phone property
+  const all = Object.values(profiles);
+  const cleanIdLower = identifier.toString().toLowerCase().trim();
+  const matched = all.find((p) => 
+    (p.email && p.email.toLowerCase().trim() === cleanIdLower) ||
+    (p.phone && p.phone.replace(/\D/g, '').slice(-10) === cleanPhone) ||
+    p.uid === identifier ||
+    p.id === identifier
+  );
+
+  return matched || null;
+}
+
+export function findUserProfileByPhone(phone) {
+  return findUserProfile(phone);
 }

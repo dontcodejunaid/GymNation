@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Menu, X, Phone, Calculator, QrCode } from "lucide-react";
+import { Menu, X, Phone, Calculator, QrCode, User } from "lucide-react";
 import { RandomLetterSwap } from "./random-letter-swap";
 import { WhatsAppIcon } from "./social-icons";
 import { LiquidMetalButton } from "./liquid-metal-button";
@@ -26,7 +26,7 @@ const trackedSections = [
   "#contact"
 ];
 
-export default function RandomLetterSwapNav({ onOpenRecovery }) {
+export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, currentUser }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("#home");
@@ -133,6 +133,35 @@ export default function RandomLetterSwapNav({ onOpenRecovery }) {
         </nav>
 
         <div className="flex items-center gap-3">
+          {/* Cult.fit Style Login / Signup / Profile Modal Button */}
+          {onOpenAuth && (
+            <button
+              aria-label={currentUser ? "User Profile" : "Login or Sign Up"}
+              title={currentUser ? `Profile (${currentUser.name || currentUser.phone || currentUser.email || 'Member'})` : "Member Login & Sign Up"}
+              className={cn(
+                "flex h-10 items-center justify-center gap-1.5 px-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition-all duration-300 active:scale-95 cursor-pointer",
+                currentUser
+                  ? "border-orange-500/60 bg-orange-500/15 text-orange-400 hover:bg-orange-500/25 hover:border-orange-500 hover:text-white shadow-[0_0_12px_rgba(249,115,22,0.2)]"
+                  : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-orange-500/50 hover:bg-orange-500/20 hover:text-white"
+              )}
+              onClick={onOpenAuth}
+              type="button"
+            >
+              {currentUser?.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={currentUser.name || 'Profile'}
+                  className="h-5 w-5 rounded-full object-cover border border-orange-400"
+                />
+              ) : (
+                <User className="h-[16px] w-[16px] text-orange-400" />
+              )}
+              <span className="hidden sm:inline max-w-[100px] truncate">
+                {currentUser ? (currentUser.name ? currentUser.name.split(' ')[0] : 'PROFILE') : 'LOGIN'}
+              </span>
+            </button>
+          )}
+
           {/* Find Pass / Digital Pass Recovery Button */}
           {onOpenRecovery && (
             <button

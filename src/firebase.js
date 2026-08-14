@@ -15,6 +15,16 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  updateProfile
+} from 'firebase/auth';
 import { INITIAL_TRAINERS } from './data/trainersAndScheduleData';
 import { DEFAULT_MEMBERSHIP_PLANS } from './data/membershipPlans';
 import { hasPassPrefix } from './utils/passId';
@@ -39,12 +49,14 @@ const firebaseConfig = {
 // Initialize Firebase App & Firestore Database safely
 let app = null;
 let db = null;
+let auth = null;
 let analytics = null;
 
 if (isFirebaseConfigured) {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
 
     if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
       isSupported().then((supported) => {
@@ -64,7 +76,116 @@ if (isFirebaseConfigured) {
   );
 }
 
-export { app, db, analytics };
+export { app, db, auth, analytics };
+
+/**
+ * Perform real Google Auth Sign-In with Popup via Firebase
+ */
+export async function signInWithGooglePopup() {
+  if (!app) {
+    throw new Error('Firebase is not configured. Check environment variables.');
+  }
+  const authObj = auth || getAuth(app);
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  const result = await signInWithPopup(authObj, provider);
+  return result.user;
+}
+
+/**
+ * Initialize invisible reCAPTCHA for Firebase Phone Authentication
+ */
+export function initRecaptchaVerifier(buttonId = 'recaptcha-container') {
+  if (!app) return null;
+  const authObj = auth || getAuth(app);
+
+  if (typeof window !== 'undefined' && window.recaptchaVerifier) {
+    return window.recaptchaVerifier;
+  }
+
+  try {
+    window.recaptchaVerifier = new RecaptchaVerifier(authObj, buttonId, {
+      size: 'invisible',
+      callback: () => {},
+      'expired-callback': () => {
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        }
+      }
+    });
+    return window.recaptchaVerifier;
+  } catch (err) {
+    console.warn('RecaptchaVerifier init note:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Send real Firebase Phone SMS OTP
+ */
+export async function sendFirebasePhoneOtp(formattedPhoneNumber) {
+  if (!app) throw new Error('Firebase not initialized');
+  const authObj = auth || getAuth(app);
+  const appVerifier = initRecaptchaVerifier('recaptcha-container');
+
+  try {
+    const confirmationResult = await signInWithPhoneNumber(authObj, formattedPhoneNumber, appVerifier);
+    return confirmationResult;
+  } catch (err) {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (e) {}
+    }
+    throw err;
+  }
+}
+
+/**
+ * Perform Firebase Authentication for Phone / Email sign-ups
+ */
+export async function authenticateUserWithFirebase(userProfile) {
+  if (!app) return null;
+  const authObj = auth || getAuth(app);
+
+  // If user signed in with email, authenticate with real email
+  if (userProfile.email && userProfile.email.includes('@')) {
+    const authEmail = userProfile.email.toLowerCase().trim();
+    const cleanDigits = (userProfile.phone || '').replace(/\D/g, '');
+    const authSecret = `GymNation@${cleanDigits.slice(-6) || 'Secure2026!'}`;
+
+    try {
+      let firebaseUser = null;
+      try {
+        const userCredential = await signInWithEmailAndPassword(authObj, authEmail, authSecret);
+        firebaseUser = userCredential.user;
+      } catch (loginErr) {
+        if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
+          const newCredential = await createUserWithEmailAndPassword(authObj, authEmail, authSecret);
+          firebaseUser = newCredential.user;
+        } else {
+          throw loginErr;
+        }
+      }
+
+      if (firebaseUser) {
+        const displayName = userProfile.name || userProfile.email.split('@')[0] || 'GymNation Member';
+        await updateProfile(firebaseUser, { displayName });
+        return {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName,
+          email: firebaseUser.email,
+        };
+      }
+    } catch (err) {
+      console.warn('Firebase Email Auth note:', err.code, err.message);
+    }
+  }
+
+  return null;
+}
 
 const BOOKINGS_COLLECTION = 'bookings';
 const REVIEWS_COLLECTION = 'reviews';
@@ -74,6 +195,146 @@ const MEMBERSHIPS_COLLECTION = 'memberships';
 // catalogue; this one holds the people on those plans.
 const MEMBER_SIGNUPS_COLLECTION = 'membershipSignups';
 const NEWSLETTER_COLLECTION = 'newsletterSubscribers';
+const USERS_COLLECTION = 'users';
+const GYMNATION_USERS_COLLECTION = 'gymnation_users';
+
+/**
+ * Save or update signed-up user profile in Firebase Firestore (collections: 'membershipSignups', 'gymnation_users', and 'users')
+ */
+export async function saveUserToFirebase(userProfile) {
+  if (!userProfile) return null;
+  
+  try {
+    // Deterministic Document ID based on Phone Number, Email, or UID (never purely random)
+    const cleanPhone = (userProfile.phone || '').replace(/\D/g, '').slice(-10);
+    const cleanEmail = (userProfile.email || '').toLowerCase().trim();
+    
+    let cleanDocId = '';
+    if (cleanPhone && cleanPhone.length >= 10) {
+      cleanDocId = `phone-${cleanPhone}`;
+    } else if (cleanEmail && cleanEmail.includes('@')) {
+      cleanDocId = `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}`;
+    } else if (userProfile.uid) {
+      cleanDocId = `uid-${userProfile.uid.replace(/[^a-zA-Z0-9_-]+/g, '-')}`;
+    } else {
+      cleanDocId = `member-${Date.now()}`;
+    }
+
+    if (db) {
+      const record = {
+        uid: userProfile.uid || cleanDocId,
+        id: cleanDocId,
+        memberName: userProfile.name || 'GymNation Member',
+        name: userProfile.name || 'GymNation Member',
+        phone: userProfile.phone || '',
+        email: userProfile.email || '',
+        photoURL: userProfile.photoURL || '',
+        dob: userProfile.dob || '',
+        gender: userProfile.gender || '',
+        bloodGroup: userProfile.bloodGroup || '',
+        emergencyContact: userProfile.emergencyContact || '',
+        address: userProfile.address || '',
+        fitnessGoal: userProfile.fitnessGoal || '',
+        height: userProfile.height || '',
+        weight: userProfile.weight || '',
+        authProvider: userProfile.provider || 'Phone',
+        provider: userProfile.provider || 'Phone',
+        planName: userProfile.planName || 'Free Access / Member Sign-up',
+        status: userProfile.status || 'Active',
+        createdAt: userProfile.createdAt || new Date().toISOString(),
+        signedUpAt: userProfile.signedUpAt || new Date().toISOString(),
+        lastLoginAt: userProfile.lastLoginAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // 1. Write to 'gymnation_users' collection
+      try {
+        const gymnationUserRef = doc(db, GYMNATION_USERS_COLLECTION, cleanDocId);
+        await setDoc(gymnationUserRef, record, { merge: true });
+        console.info(`[FIREBASE FIRESTORE] Saved to 'gymnation_users': ${cleanDocId}`);
+      } catch (e2) {
+        console.warn('Firestore gymnation_users write notice:', e2.message);
+      }
+
+      // 2. Write to 'membershipSignups' collection
+      try {
+        const signupRef = doc(db, MEMBER_SIGNUPS_COLLECTION, cleanDocId);
+        await setDoc(signupRef, record, { merge: true });
+      } catch (e1) {
+        console.warn('Firestore membershipSignups write notice:', e1.message);
+      }
+
+      // 3. Write to 'users' collection
+      try {
+        const userDocRef = doc(db, USERS_COLLECTION, cleanDocId);
+        await setDoc(userDocRef, record, { merge: true });
+      } catch (e3) {
+        console.warn('Firestore users write notice:', e3.message);
+      }
+
+      return record;
+    }
+  } catch (err) {
+    console.warn('Failed to save user profile to Firebase Firestore:', err.message);
+  }
+  return null;
+}
+
+/**
+ * Fetch existing user profile from Firebase Firestore by phone, email, or uid
+ */
+export async function getUserFromFirebase(identifier) {
+  if (!db || !identifier) return null;
+
+  try {
+    const rawStr = identifier.toString().trim();
+    const cleanDigits = rawStr.replace(/\D/g, '').slice(-10);
+    const cleanEmail = rawStr.toLowerCase();
+
+    // Check candidate doc IDs
+    const candidateIds = [
+      cleanDigits && cleanDigits.length >= 10 ? `phone-${cleanDigits}` : null,
+      cleanEmail.includes('@') ? `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}` : null,
+      `uid-${rawStr.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
+      rawStr.replace(/\+/g, '').replace(/@/g, '-at-').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase()
+    ].filter(Boolean);
+
+    for (const docId of candidateIds) {
+      try {
+        const directDoc = await getDoc(doc(db, GYMNATION_USERS_COLLECTION, docId));
+        if (directDoc.exists() && directDoc.data()) {
+          return directDoc.data();
+        }
+      } catch (e) {}
+
+      try {
+        const signupDoc = await getDoc(doc(db, MEMBER_SIGNUPS_COLLECTION, docId));
+        if (signupDoc.exists() && signupDoc.data()) {
+          return signupDoc.data();
+        }
+      } catch (e) {}
+    }
+
+    // Also scan gymnation_users collection by phone number field match if doc ID didn't hit
+    if (cleanDigits && cleanDigits.length >= 10) {
+      try {
+        const querySnapshot = await getDocs(collection(db, GYMNATION_USERS_COLLECTION));
+        for (const docItem of querySnapshot.docs) {
+          const data = docItem.data();
+          const itemDigits = (data.phone || '').replace(/\D/g, '').slice(-10);
+          if (itemDigits === cleanDigits) {
+            return data;
+          }
+        }
+      } catch (scanErr) {
+        console.warn('Firestore scan note:', scanErr.message);
+      }
+    }
+  } catch (err) {
+    console.warn('Firebase user fetch notice:', err.message);
+  }
+  return null;
+}
 
 // Helper to create clean document ID for newsletter subscribers (e.g. "you@example.com" -> "you-at-example-com")
 function getNewsletterDocId(email) {

@@ -53,7 +53,7 @@ export function sendWhatsAppBookingAlert(bookingDetails, targetPhone = null) {
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${destinationNumber}&text=${encodedMessage}`;
   
   if (typeof window !== 'undefined') {
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   }
 
   return { whatsappUrl, destinationNumber };

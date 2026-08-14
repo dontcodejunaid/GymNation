@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email in [
+          'zoyasayeedaahmed@gmail.com',
+          'zoyasayeedaahmed05@gmail.com',
+          'dontcodejunaid@gmail.com',
+          'yaqubahmed8017@gmail.com',
+          'souravbrave324@gmail.com'
+        ] || request.auth.token.admin == true
+      );
+    }
+
+    // Public readable catalogs (Trainers, Membership Plans, Classes, Offers, About Content)
+    match /trainers/{trainerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /memberships/{membershipId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /classes/{classId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /site_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /about_content/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // User Bookings & Free Trials
+    match /bookings/{bookingId} {
+      // Anyone can create a new booking request with valid basic fields
+      allow create: if request.resource.data.name is string 
+                    && request.resource.data.phone is string;
+      // Only admins or the user matching the booking phone/email can view or update
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Membership Signups & Registrations (Contains PII & Payment Info)
+    match /membershipSignups/{signupId} {
+      // Allow customers to record their checkout/signup
+      allow create: if request.resource.data.memberName is string
+                    && request.resource.data.phone is string;
+      // Only authenticated admins can read all signups or modify/delete them
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Newsletter Subscribers
+    match /newsletter_subscribers/{subscriberId} {
+      allow create: if request.resource.data.email is string;
+      allow read, delete: if isAdmin();
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      allow read: if isAdmin();
+    }
+  }
+}

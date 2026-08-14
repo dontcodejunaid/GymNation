@@ -123,7 +123,7 @@ export function openGoogleCalendar(booking) {
 
   const googleCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
 
-  window.open(googleCalUrl, '_blank');
+  window.open(googleCalUrl, '_blank', 'noopener,noreferrer');
   return true;
 }
 

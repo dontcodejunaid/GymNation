@@ -45,7 +45,7 @@ const hours = [
   { days: 'Mon - Sun', shift: 'Evening Shift', time: '5:00 PM - 10:00 PM' },
 ];
 
-export default function Footer({ onOpenLegal }) {
+export default function Footer({ onOpenLegal, onNavigate }) {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,6 +57,11 @@ export default function Footer({ onOpenLegal }) {
     if (event) event.preventDefault();
 
     const path = typeof linkObj === 'string' ? linkObj : linkObj.href;
+    if (onNavigate) {
+      onNavigate(path);
+      return;
+    }
+
     const sectionId = typeof linkObj === 'object' && linkObj.sectionId ? linkObj.sectionId : '#' + path.replace('/', '').replace('#', '');
     const cleanPath = path.startsWith('/') ? path : '/' + path.replace('#', '');
 
@@ -84,7 +89,7 @@ export default function Footer({ onOpenLegal }) {
   };
 
   return (
-    <footer id="contact" className="relative bg-slate-950 text-slate-300 border-t border-slate-800/60 overflow-hidden scroll-mt-20">
+    <footer id="footer" className="relative bg-slate-950 text-slate-300 border-t border-slate-800/60 overflow-hidden scroll-mt-20">
       {/* Ambient orange glow to echo the hero treatment */}
       <div
         aria-hidden="true"

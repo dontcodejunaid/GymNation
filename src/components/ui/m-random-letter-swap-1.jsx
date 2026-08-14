@@ -26,16 +26,21 @@ const trackedSections = [
   "#contact"
 ];
 
-export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, currentUser }) {
+export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, currentUser, currentPage = 'home', onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("#home");
+  const [activeSection, setActiveSection] = useState(currentPage === 'contact' ? '#contact' : '#home');
 
   const whatsappUrl = `https://api.whatsapp.com/send?phone=${WhatsAppConfig.ActiveNumber}&text=${encodeURIComponent(
     "Hi Gymnation! I'd like to know more about your memberships."
   )}`;
 
   useEffect(() => {
+    if (currentPage === 'contact') {
+      setActiveSection('#contact');
+      return;
+    }
+
     const onScroll = () => {
       setScrolled(window.scrollY > 40);
 
@@ -44,6 +49,7 @@ export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, curren
       let currentActive = "#home";
 
       for (const href of trackedSections) {
+        if (href === "#contact") continue;
         const section = document.querySelector(href);
         if (section) {
           const rect = section.getBoundingClientRect();
@@ -59,17 +65,17 @@ export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, curren
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
 
-    // On page reload/refresh, reset URL back to root domain /
-    if (window.history.replaceState) {
-      window.history.replaceState(null, "", "/");
-    }
-
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [currentPage]);
 
   const goTo = (event, pathOrId) => {
     if (event) event.preventDefault();
     setMenuOpen(false);
+
+    if (onNavigate) {
+      onNavigate(pathOrId);
+      return;
+    }
 
     const sectionId = pathOrId.startsWith("#") ? pathOrId : "#" + pathOrId.replace("/", "");
     const cleanPath = pathOrId.startsWith("/") ? pathOrId : "/" + pathOrId.replace("#", "");

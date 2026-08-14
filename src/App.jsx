@@ -15,6 +15,7 @@ import Testimonials from './components/TestimonialsSection';
 import ProgressTracker from './components/ProgressTracker';
 import BookingForm from './components/BookingForm';
 import Footer from './components/Footer';
+import ContactPage from './components/ContactPage';
 import AdminPortal from './components/admin/AdminPortal';
 import FloatingActions from './components/ui/floating-actions';
 import SplashIntroScreen from './components/SplashIntroScreen';
@@ -52,6 +53,18 @@ function App() {
 
   const [currentUser, setCurrentUser] = useState(null);
 
+  const getInitialPage = () => {
+    if (typeof window === 'undefined') return 'home';
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    if (path === '/contact' || hash === '#contact' || hash === '#/contact' || hash === '#contact-page') {
+      return 'contact';
+    }
+    return 'home';
+  };
+
+  const [currentPage, setCurrentPage] = useState(getInitialPage);
+
   const handleOpenLegal = (tab = 'terms') => {
     setLegalModalTab(tab);
     setIsLegalModalOpen(true);
@@ -74,6 +87,19 @@ function App() {
   useEffect(() => {
     trackEvent('PAGE_VIEW');
 
+    const handleLocationChange = () => {
+      const path = window.location.pathname.toLowerCase();
+      const hash = window.location.hash.toLowerCase();
+      if (path === '/contact' || hash === '#contact' || hash === '#/contact' || hash === '#contact-page') {
+        setCurrentPage('contact');
+      } else {
+        setCurrentPage('home');
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+
     try {
       const savedPass = localStorage.getItem('gymnation_member_pass');
       if (savedPass) {
@@ -91,7 +117,52 @@ function App() {
     } catch (e) {
       console.error('Failed to parse stored user:', e);
     }
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
   }, []);
+
+  const handleNavigate = (pathOrId) => {
+    const target = pathOrId ? pathOrId.trim() : '/home';
+    if (target === '/contact' || target === '#contact' || target === 'contact') {
+      setCurrentPage('contact');
+      if (window.history.pushState) {
+        window.history.pushState({ page: 'contact' }, '', '/contact');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const sectionId = target.startsWith('#') ? target : '#' + target.replace('/', '');
+    const cleanPath = target.startsWith('/') ? target : '/' + target.replace('#', '');
+
+    if (currentPage !== 'home') {
+      setCurrentPage('home');
+      if (window.history.pushState) {
+        window.history.pushState({ page: 'home' }, '', cleanPath);
+      }
+      setTimeout(() => {
+        const element = document.querySelector(sectionId);
+        if (element) {
+          const block = sectionId === '#bmi-calculator' ? 'center' : 'start';
+          element.scrollIntoView({ behavior: 'smooth', block });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 80);
+    } else {
+      if (window.history.pushState) {
+        window.history.pushState(null, '', cleanPath);
+      }
+      const element = document.querySelector(sectionId);
+      if (element) {
+        const block = sectionId === '#bmi-calculator' ? 'center' : 'start';
+        element.scrollIntoView({ behavior: 'smooth', block });
+      }
+    }
+  };
 
   const handleSelectTrainer = (trainer) => {
     setSelectedTrainer(trainer);
@@ -108,8 +179,7 @@ function App() {
 
   const handleClaimOffer = (code, discountPercent) => {
     setAppliedDiscount(discountPercent);
-    const el = document.getElementById('membership');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    handleNavigate('#membership');
   };
 
   const handlePaymentSuccess = async (memberData) => {
@@ -175,26 +245,39 @@ function App() {
 
       <RandomLetterSwapNav
         currentUser={currentUser}
+        currentPage={currentPage}
+        onNavigate={handleNavigate}
         onOpenRecovery={() => setIsRecoveryModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
       />
-      <Hero />
-      <About />
-      <BMICalculator />
-      <Trainers onSelectTrainer={handleSelectTrainer} />
-      <ClassSchedule onSelectClass={handleSelectClass} />
-      <Facilities />
-      <ReferralProgram />
-      <MembershipPlans onSelectPlan={handleSelectPlan} />
-      
-      {/* Google Reviews & Instagram Live Feed */}
-      <SocialProofFeed />
 
-      <Gallery />
-      <Testimonials />
-      <ProgressTracker />
-      <BookingForm selectedPlan={selectedPlan} selectedClass={_selectedClass} onClearPlan={() => setSelectedPlan(null)} onClearClass={() => setSelectedClass(null)} />
-      <Footer onOpenLegal={handleOpenLegal} />
+      {currentPage === 'contact' ? (
+        <ContactPage
+          onNavigate={handleNavigate}
+          onOpenLegal={handleOpenLegal}
+          onSelectPlan={handleSelectPlan}
+        />
+      ) : (
+        <>
+          <Hero />
+          <About />
+          <BMICalculator />
+          <Trainers onSelectTrainer={handleSelectTrainer} />
+          <ClassSchedule onSelectClass={handleSelectClass} />
+          <Facilities />
+          <ReferralProgram />
+          <MembershipPlans onSelectPlan={handleSelectPlan} />
+          
+          {/* Google Reviews & Instagram Live Feed */}
+          <SocialProofFeed />
+
+          <Gallery />
+          <Testimonials />
+          <ProgressTracker />
+          <BookingForm selectedPlan={selectedPlan} selectedClass={_selectedClass} onClearPlan={() => setSelectedPlan(null)} onClearClass={() => setSelectedClass(null)} />
+          <Footer onOpenLegal={handleOpenLegal} onNavigate={handleNavigate} />
+        </>
+      )}
 
       {/* Integrated Floating Action Stack */}
       <FloatingActions

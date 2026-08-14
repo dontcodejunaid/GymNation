@@ -15,7 +15,16 @@ import {
   onSnapshot
 } from 'firebase/firestore';
 import { getAnalytics, isSupported } from 'firebase/analytics';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, updateProfile } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
+  updateProfile
+} from 'firebase/auth';
 import { INITIAL_TRAINERS } from './data/trainersAndScheduleData';
 import { DEFAULT_MEMBERSHIP_PLANS } from './data/membershipPlans';
 import { hasPassPrefix } from './utils/passId';
@@ -84,28 +93,98 @@ export async function signInWithGooglePopup() {
 }
 
 /**
+ * Initialize invisible reCAPTCHA for Firebase Phone Authentication
+ */
+export function initRecaptchaVerifier(buttonId = 'recaptcha-container') {
+  if (!app) return null;
+  const authObj = auth || getAuth(app);
+
+  if (typeof window !== 'undefined' && window.recaptchaVerifier) {
+    return window.recaptchaVerifier;
+  }
+
+  try {
+    window.recaptchaVerifier = new RecaptchaVerifier(authObj, buttonId, {
+      size: 'invisible',
+      callback: () => {},
+      'expired-callback': () => {
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        }
+      }
+    });
+    return window.recaptchaVerifier;
+  } catch (err) {
+    console.warn('RecaptchaVerifier init note:', err.message);
+    return null;
+  }
+}
+
+/**
+ * Send real Firebase Phone SMS OTP
+ */
+export async function sendFirebasePhoneOtp(formattedPhoneNumber) {
+  if (!app) throw new Error('Firebase not initialized');
+  const authObj = auth || getAuth(app);
+  const appVerifier = initRecaptchaVerifier('recaptcha-container');
+
+  try {
+    const confirmationResult = await signInWithPhoneNumber(authObj, formattedPhoneNumber, appVerifier);
+    return confirmationResult;
+  } catch (err) {
+    if (window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      } catch (e) {}
+    }
+    throw err;
+  }
+}
+
+/**
  * Perform Firebase Authentication for Phone / Email sign-ups
  */
 export async function authenticateUserWithFirebase(userProfile) {
   if (!app) return null;
   const authObj = auth || getAuth(app);
 
-  try {
-    const userCredential = await signInAnonymously(authObj);
-    const firebaseUser = userCredential.user;
+  // If user signed in with email, authenticate with real email
+  if (userProfile.email && userProfile.email.includes('@')) {
+    const authEmail = userProfile.email.toLowerCase().trim();
+    const cleanDigits = (userProfile.phone || '').replace(/\D/g, '');
+    const authSecret = `GymNation@${cleanDigits.slice(-6) || 'Secure2026!'}`;
 
-    const displayName = userProfile.name || userProfile.phone || userProfile.email || 'GymNation Member';
-    await updateProfile(firebaseUser, { displayName });
+    try {
+      let firebaseUser = null;
+      try {
+        const userCredential = await signInWithEmailAndPassword(authObj, authEmail, authSecret);
+        firebaseUser = userCredential.user;
+      } catch (loginErr) {
+        if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
+          const newCredential = await createUserWithEmailAndPassword(authObj, authEmail, authSecret);
+          firebaseUser = newCredential.user;
+        } else {
+          throw loginErr;
+        }
+      }
 
-    console.info(`[FIREBASE AUTH] Registered user in Firebase Authentication: ${firebaseUser.uid}`);
-    return {
-      uid: firebaseUser.uid,
-      displayName: firebaseUser.displayName,
-    };
-  } catch (err) {
-    console.warn('Firebase Auth user registration notice:', err.message);
-    return null;
+      if (firebaseUser) {
+        const displayName = userProfile.name || userProfile.email.split('@')[0] || 'GymNation Member';
+        await updateProfile(firebaseUser, { displayName });
+        return {
+          uid: firebaseUser.uid,
+          displayName: firebaseUser.displayName,
+          email: firebaseUser.email,
+        };
+      }
+    } catch (err) {
+      console.warn('Firebase Email Auth note:', err.code, err.message);
+    }
   }
+
+  return null;
 }
 
 const BOOKINGS_COLLECTION = 'bookings';
@@ -148,13 +227,22 @@ export async function saveUserToFirebase(userProfile) {
         name: userProfile.name || 'GymNation Member',
         phone: userProfile.phone || '',
         email: userProfile.email || '',
+        photoURL: userProfile.photoURL || '',
+        dob: userProfile.dob || '',
+        gender: userProfile.gender || '',
+        bloodGroup: userProfile.bloodGroup || '',
+        emergencyContact: userProfile.emergencyContact || '',
+        address: userProfile.address || '',
+        fitnessGoal: userProfile.fitnessGoal || '',
+        height: userProfile.height || '',
+        weight: userProfile.weight || '',
         authProvider: userProfile.provider || 'Phone/OTP',
         provider: userProfile.provider || 'Phone/OTP',
-        planName: 'Free Access / Member Sign-up',
-        status: 'Active',
+        planName: userProfile.planName || 'Free Access / Member Sign-up',
+        status: userProfile.status || 'Active',
         createdAt: userProfile.createdAt || new Date().toISOString(),
-        signedUpAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
+        signedUpAt: userProfile.signedUpAt || new Date().toISOString(),
+        lastLoginAt: userProfile.lastLoginAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
@@ -188,6 +276,45 @@ export async function saveUserToFirebase(userProfile) {
     }
   } catch (err) {
     console.warn('Failed to save user profile to Firebase Firestore:', err.message);
+  }
+  return null;
+}
+
+/**
+ * Fetch existing user profile from Firebase Firestore by phone, email, or uid
+ */
+export async function getUserFromFirebase(identifier) {
+  if (!db || !identifier) return null;
+
+  try {
+    const cleanId = identifier
+      .toString()
+      .trim()
+      .replace(/\+/g, '')
+      .replace(/@/g, '-at-')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .toLowerCase();
+
+    // 1. Check gymnation_users by docId
+    const directDoc = await getDoc(doc(db, GYMNATION_USERS_COLLECTION, cleanId));
+    if (directDoc.exists()) {
+      return directDoc.data();
+    }
+
+    // 2. Check membershipSignups by docId
+    const signupDoc = await getDoc(doc(db, MEMBER_SIGNUPS_COLLECTION, cleanId));
+    if (signupDoc.exists()) {
+      return signupDoc.data();
+    }
+
+    // 3. Fallback: check users collection
+    const userDoc = await getDoc(doc(db, USERS_COLLECTION, cleanId));
+    if (userDoc.exists()) {
+      return userDoc.data();
+    }
+  } catch (err) {
+    console.warn('Firebase user fetch notice:', err.message);
   }
   return null;
 }

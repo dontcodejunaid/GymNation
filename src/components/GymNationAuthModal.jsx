@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronDown, Mail, Smartphone, ArrowRight, ShieldCheck, CheckCircle2, User, Sparkles, MessageSquare } from 'lucide-react';
+import { X, ChevronDown, Mail, Smartphone, ArrowRight, ShieldCheck, CheckCircle2, User, Sparkles, MessageSquare, Camera, Edit3, Calendar, Heart, Award, ArrowLeft, Check, Save } from 'lucide-react';
 import logoImg from '../assets/logo.png';
-import { signInWithGooglePopup, saveUserToFirebase, authenticateUserWithFirebase } from '../firebase';
+import { signInWithGooglePopup, saveUserToFirebase, authenticateUserWithFirebase, getUserFromFirebase, sendFirebasePhoneOtp } from '../firebase';
 import { WhatsAppIcon } from './ui/social-icons';
 import { WhatsAppConfig, formatWhatsAppNumber } from '../utils/whatsapp';
 import { sendOtpEmail } from '../utils/bookingNotifications';
+import { saveUserProfile, findUserProfile } from '../utils/localStorage';
+import CustomDatePicker from './ui/CustomDatePicker';
 
-export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, onOpenLegal }) {
+export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, onLogoutSuccess, onOpenLegal, currentUser }) {
   const [authMode, setAuthMode] = useState('phone'); // 'phone' | 'email'
-  const [step, setStep] = useState('input'); // 'input' | 'otp' | 'success'
+  const [step, setStep] = useState('input'); // 'input' | 'otp' | 'success' | 'profile' | 'edit-profile'
   const [countryCode, setCountryCode] = useState('+91');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -18,11 +20,31 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
   // OTP State
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [generatedOtp, setGeneratedOtp] = useState('');
+  const [phoneConfirmationResult, setPhoneConfirmationResult] = useState(null);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeUser, setActiveUser] = useState(null);
+  const [activeUser, setActiveUser] = useState(currentUser || null);
+
+  // Profile Edit State
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    dob: '',
+    gender: 'Prefer not to say',
+    bloodGroup: '',
+    emergencyContact: '',
+    address: '',
+    fitnessGoal: 'General Fitness',
+    height: '',
+    weight: '',
+    photoURL: ''
+  });
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+  const fileInputRef = useRef(null);
 
   const otpInputRefs = [
     useRef(null), useRef(null), useRef(null),
@@ -41,21 +63,38 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
   useEffect(() => {
     if (isOpen) {
       setStep('input');
+      setIsEditingProfile(false);
       setErrorMsg('');
+      setSaveSuccessMsg('');
       setIsLoading(false);
+      setPhoneConfirmationResult(null);
       
       // Check if already logged in
       try {
         const saved = localStorage.getItem('gymnation_user');
-        if (saved) {
-          const user = JSON.parse(saved);
-          setActiveUser(user);
+        const user = saved ? JSON.parse(saved) : (currentUser || null);
+        setActiveUser(user);
+        if (user) {
+          setProfileForm({
+            name: user.name || '',
+            phone: user.phone || '',
+            email: user.email || '',
+            dob: user.dob || '',
+            gender: user.gender || 'Prefer not to say',
+            bloodGroup: user.bloodGroup || '',
+            emergencyContact: user.emergencyContact || '',
+            address: user.address || '',
+            fitnessGoal: user.fitnessGoal || 'General Fitness',
+            height: user.height || '',
+            weight: user.weight || '',
+            photoURL: user.photoURL || ''
+          });
         }
       } catch (e) {
         console.error(e);
       }
     }
-  }, [isOpen]);
+  }, [isOpen, currentUser]);
 
   // Countdown timer for OTP
   useEffect(() => {
@@ -97,7 +136,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     }
   };
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     if (e) e.preventDefault();
     setErrorMsg('');
 
@@ -116,32 +155,58 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
 
     setIsLoading(true);
 
-    // Generate real 6-digit OTP
-    setTimeout(() => {
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(code);
-      // Empty input boxes for recipient to enter their code
-      setOtpDigits(['', '', '', '', '', '']);
-      setTimer(30);
-      setCanResend(false);
-      setIsLoading(false);
-      setStep('otp');
+    if (authMode === 'phone') {
+      const targetNumber = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
 
-      // Dispatch via Email or SMS
-      if (authMode === 'email') {
-        sendOtpEmail(emailAddress, code);
-      } else {
-        const targetNumber = `${countryCode}${phoneNumber}`;
+      try {
+        // Real Firebase Phone Authentication with SMS
+        const confirmation = await sendFirebasePhoneOtp(targetNumber);
+        setPhoneConfirmationResult(confirmation);
+        setGeneratedOtp('');
+        setOtpDigits(['', '', '', '', '', '']);
+        setTimer(60);
+        setCanResend(false);
+        setIsLoading(false);
+        setStep('otp');
+
+        setTimeout(() => {
+          if (otpInputRefs[0].current) otpInputRefs[0].current.focus();
+        }, 150);
+        return;
+      } catch (phoneErr) {
+        console.warn('Firebase Phone Auth SMS note:', phoneErr.code, phoneErr.message);
+        // Fallback to in-app OTP & WhatsApp OTP
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        setGeneratedOtp(code);
+        setPhoneConfirmationResult(null);
         dispatchSmsOtp(targetNumber, code);
-      }
+        setOtpDigits(['', '', '', '', '', '']);
+        setTimer(30);
+        setCanResend(false);
+        setIsLoading(false);
+        setStep('otp');
 
-      // Auto-focus first digit input
-      setTimeout(() => {
-        if (otpInputRefs[0].current) {
-          otpInputRefs[0].current.focus();
-        }
-      }, 150);
-    }, 400);
+        setTimeout(() => {
+          if (otpInputRefs[0].current) otpInputRefs[0].current.focus();
+        }, 150);
+        return;
+      }
+    }
+
+    // Email OTP Dispatch
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOtp(code);
+    setPhoneConfirmationResult(null);
+    setOtpDigits(['', '', '', '', '', '']);
+    setTimer(30);
+    setCanResend(false);
+    setIsLoading(false);
+    setStep('otp');
+    sendOtpEmail(emailAddress, code);
+
+    setTimeout(() => {
+      if (otpInputRefs[0].current) otpInputRefs[0].current.focus();
+    }, 150);
   };
 
   const handleSendWhatsAppOtp = () => {
@@ -158,12 +223,35 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
 
     try {
       const googleUser = await signInWithGooglePopup();
+
+      // Check for existing profile in local cache or Firebase Firestore
+      const lookupEmail = (googleUser.email || '').toLowerCase().trim();
+      const existingLocal = findUserProfile(lookupEmail) || findUserProfile(googleUser.uid);
+      let existingRemote = null;
+      try {
+        existingRemote = await getUserFromFirebase(lookupEmail) || await getUserFromFirebase(googleUser.uid);
+      } catch (e) {
+        console.warn('Google user profile lookup note:', e);
+      }
+
+      const existingProfile = existingRemote || existingLocal || {};
+
       const authenticatedUser = {
-        name: googleUser.displayName || 'GymNation Athlete',
-        email: googleUser.email || '',
-        photoURL: googleUser.photoURL || '',
+        ...existingProfile,
+        name: existingProfile.name || googleUser.displayName || 'GymNation Athlete',
+        email: googleUser.email || existingProfile.email || '',
+        photoURL: existingProfile.photoURL || googleUser.photoURL || '',
+        dob: existingProfile.dob || '',
+        gender: existingProfile.gender || 'Prefer not to say',
+        bloodGroup: existingProfile.bloodGroup || '',
+        emergencyContact: existingProfile.emergencyContact || '',
+        fitnessGoal: existingProfile.fitnessGoal || 'General Fitness',
+        height: existingProfile.height || '',
+        weight: existingProfile.weight || '',
+        address: existingProfile.address || '',
         uid: googleUser.uid,
         provider: 'Google',
+        lastLoginAt: new Date().toISOString(),
         loggedInAt: new Date().toISOString()
       };
 
@@ -171,6 +259,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
       await saveUserToFirebase(authenticatedUser);
 
       localStorage.setItem('gymnation_user', JSON.stringify(authenticatedUser));
+      saveUserProfile(authenticatedUser);
       setActiveUser(authenticatedUser);
       setIsLoading(false);
       setStep('success');
@@ -249,26 +338,80 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     }
 
     setIsLoading(true);
+    setErrorMsg('');
+
+    let firebaseAuthUser = null;
+
+    // 1. If real Firebase Phone Confirmation is active, verify via Firebase Phone Auth
+    if (phoneConfirmationResult) {
+      try {
+        const userCredential = await phoneConfirmationResult.confirm(entered);
+        firebaseAuthUser = userCredential.user;
+      } catch (confirmErr) {
+        setIsLoading(false);
+        if (confirmErr.code === 'auth/invalid-verification-code') {
+          setErrorMsg('Invalid SMS OTP code. Please check the code sent to your phone.');
+        } else {
+          setErrorMsg(confirmErr.message || 'Failed to verify SMS code.');
+        }
+        return;
+      }
+    } else {
+      // Strict fallback OTP validation
+      if (generatedOtp && entered !== generatedOtp) {
+        setIsLoading(false);
+        setErrorMsg('Invalid OTP code. Please enter the correct 6-digit code received.');
+        return;
+      }
+    }
+
+    // Check for existing profile in local cache first
+    const lookupKey = authMode === 'phone' ? `${countryCode} ${phoneNumber}` : emailAddress;
+    const existingLocal = findUserProfile(lookupKey) || findUserProfile(phoneNumber);
+
+    // Also check Firebase Firestore for existing user records
+    let existingRemote = null;
+    try {
+      existingRemote = await getUserFromFirebase(lookupKey) || await getUserFromFirebase(phoneNumber) || await getUserFromFirebase(emailAddress);
+    } catch (e) {
+      console.warn('Existing profile lookup note:', e);
+    }
+
+    const existingProfile = existingRemote || existingLocal || {};
 
     const userObj = {
-      name: fullName || (authMode === 'phone' ? `Member ${phoneNumber.slice(-4)}` : emailAddress.split('@')[0]),
-      phone: authMode === 'phone' ? `${countryCode} ${phoneNumber}` : '',
-      email: authMode === 'email' ? emailAddress : `${phoneNumber.replace(/\D/g, '')}@gymnation.com`,
-      provider: authMode === 'phone' ? 'Phone/OTP' : 'Email/OTP',
+      ...existingProfile,
+      name: existingProfile.name || fullName || (authMode === 'phone' ? `Member ${phoneNumber.slice(-4)}` : emailAddress.split('@')[0]),
+      phone: authMode === 'phone' ? `${countryCode} ${phoneNumber}` : (existingProfile.phone || ''),
+      email: authMode === 'email' ? emailAddress : (existingProfile.email || ''),
+      photoURL: existingProfile.photoURL || '',
+      dob: existingProfile.dob || '',
+      gender: existingProfile.gender || 'Prefer not to say',
+      bloodGroup: existingProfile.bloodGroup || '',
+      emergencyContact: existingProfile.emergencyContact || '',
+      fitnessGoal: existingProfile.fitnessGoal || 'General Fitness',
+      height: existingProfile.height || '',
+      weight: existingProfile.weight || '',
+      address: existingProfile.address || '',
+      uid: firebaseAuthUser?.uid || existingProfile.uid || `user-${Date.now()}`,
+      provider: authMode === 'phone' ? 'Phone' : 'Email/OTP',
+      lastLoginAt: new Date().toISOString(),
       loggedInAt: new Date().toISOString()
     };
 
-    // Perform Firebase Authentication
-    try {
-      const fbUser = await authenticateUserWithFirebase(userObj);
-      if (fbUser && fbUser.uid) {
-        userObj.uid = fbUser.uid;
+    // Perform Email Firebase Authentication if user used email
+    if (authMode === 'email') {
+      try {
+        const fbUser = await authenticateUserWithFirebase(userObj);
+        if (fbUser && fbUser.uid) {
+          userObj.uid = fbUser.uid;
+        }
+      } catch (authErr) {
+        console.warn('Firebase authentication notice:', authErr.message);
       }
-    } catch (authErr) {
-      console.warn('Firebase authentication notice:', authErr.message);
     }
 
-    // Save signed up user to Firebase Firestore users collection
+    // Save/merge signed up user to Firebase Firestore users collection
     try {
       await saveUserToFirebase(userObj);
     } catch (err) {
@@ -276,6 +419,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     }
 
     localStorage.setItem('gymnation_user', JSON.stringify(userObj));
+    saveUserProfile(userObj);
     setActiveUser(userObj);
     setIsLoading(false);
     setStep('success');
@@ -287,10 +431,68 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
     }, 1200);
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit (max 3MB for base64 storage)
+    if (file.size > 3 * 1024 * 1024) {
+      setErrorMsg('Image size should be less than 3MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileForm((prev) => ({ ...prev, photoURL: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setIsLoading(true);
+    setErrorMsg('');
+    setSaveSuccessMsg('');
+
+    try {
+      const updatedUser = {
+        ...(activeUser || {}),
+        ...profileForm,
+        name: profileForm.name.trim() || activeUser?.name || 'GymNation Member',
+        phone: profileForm.phone.trim() || activeUser?.phone || '',
+        email: profileForm.email.trim() || activeUser?.email || '',
+        updatedAt: new Date().toISOString()
+      };
+
+      // Save to Firebase Firestore
+      await saveUserToFirebase(updatedUser);
+
+      // Save locally
+      localStorage.setItem('gymnation_user', JSON.stringify(updatedUser));
+      saveUserProfile(updatedUser);
+      setActiveUser(updatedUser);
+
+      if (onLoginSuccess) onLoginSuccess(updatedUser);
+
+      setSaveSuccessMsg('Profile updated successfully!');
+      setTimeout(() => {
+        setSaveSuccessMsg('');
+        setIsEditingProfile(false);
+      }, 1000);
+    } catch (err) {
+      console.warn('Failed to update profile:', err);
+      setErrorMsg('Could not save profile. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('gymnation_user');
     setActiveUser(null);
+    if (onLogoutSuccess) onLogoutSuccess();
     setStep('input');
+    setIsEditingProfile(false);
     setPhoneNumber('');
     setEmailAddress('');
   };
@@ -325,33 +527,408 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
           </span>
         </div>
 
-        {/* ALREADY LOGGED IN VIEW */}
+        {/* ALREADY LOGGED IN VIEW & MANAGE PROFILE */}
         {activeUser && step === 'input' ? (
-          <div className="text-center py-4 space-y-5">
-            <div className="mx-auto w-16 h-16 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-orange-400">
-              <User className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">Welcome back!</h3>
-              <p className="text-sm text-slate-400 mt-1">{activeUser.name || activeUser.phone || activeUser.email}</p>
-              <p className="text-xs text-orange-400 mt-0.5 font-mono">Status: Active Member</p>
-            </div>
+          <div className="py-2 animate-in fade-in duration-300">
+            {/* Hidden File Input for Picture Upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              accept="image/*"
+              className="hidden"
+            />
 
-            <div className="space-y-2.5 pt-2">
-              <button
-                onClick={onClose}
-                className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 text-white font-bold tracking-wider rounded-xl transition-all shadow-lg shadow-orange-500/25 active:scale-[0.98] cursor-pointer"
-              >
-                CONTINUE TO WORKOUTS
-              </button>
+            {!isEditingProfile ? (
+              /* PROFILE SUMMARY OVERVIEW */
+              <div className="space-y-4">
+                {/* Profile Header Card */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800/80 p-5 text-center shadow-lg">
+                  {/* Background Ambient Glow */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 bg-orange-500/10 blur-xl pointer-events-none rounded-full" />
 
-              <button
-                onClick={handleLogout}
-                className="w-full py-2.5 text-xs text-slate-400 hover:text-rose-400 font-medium transition-colors cursor-pointer"
-              >
-                Sign out of this account
-              </button>
-            </div>
+                  <div className="relative inline-block mx-auto mb-3">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-orange-500 shadow-lg shadow-orange-500/20 bg-slate-900 flex items-center justify-center">
+                      {activeUser.photoURL ? (
+                        <img
+                          src={activeUser.photoURL}
+                          alt={activeUser.name || 'Member'}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-orange-500/10 flex items-center justify-center text-orange-400">
+                          <User className="w-10 h-10" />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsEditingProfile(true);
+                        setTimeout(() => fileInputRef.current?.click(), 100);
+                      }}
+                      title="Change Profile Photo"
+                      className="absolute bottom-0 right-0 p-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full shadow-md transition-transform active:scale-90 cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <h3 className="text-xl font-black text-white tracking-wide">
+                    {activeUser.name || 'GymNation Athlete'}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {activeUser.phone || activeUser.email || 'Member ID: #GN-' + (activeUser.uid?.slice(-6) || '8839')}
+                  </p>
+
+                  <div className="mt-3 flex items-center justify-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Active Member
+                    </span>
+                    {activeUser.fitnessGoal && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-orange-500/15 border border-orange-500/30 text-orange-400">
+                        🎯 {activeUser.fitnessGoal}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Profile Key Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-left text-xs">
+                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block">Email</span>
+                    <span className="text-slate-200 font-medium truncate block mt-0.5">
+                      {activeUser.email || 'Not provided'}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block">Phone</span>
+                    <span className="text-slate-200 font-medium truncate block mt-0.5">
+                      {activeUser.phone || 'Not provided'}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block">Date of Birth</span>
+                    <span className="text-slate-200 font-medium truncate block mt-0.5">
+                      {activeUser.dob || 'Not set'}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider block">Blood Group</span>
+                    <span className="text-slate-200 font-medium truncate block mt-0.5">
+                      {activeUser.bloodGroup || 'Not set'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileForm({
+                        name: activeUser.name || '',
+                        phone: activeUser.phone || '',
+                        email: activeUser.email || '',
+                        dob: activeUser.dob || '',
+                        gender: activeUser.gender || 'Prefer not to say',
+                        bloodGroup: activeUser.bloodGroup || '',
+                        emergencyContact: activeUser.emergencyContact || '',
+                        address: activeUser.address || '',
+                        fitnessGoal: activeUser.fitnessGoal || 'General Fitness',
+                        height: activeUser.height || '',
+                        weight: activeUser.weight || '',
+                        photoURL: activeUser.photoURL || ''
+                      });
+                      setIsEditingProfile(true);
+                    }}
+                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    MANAGE PROFILE
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-bold tracking-wider uppercase rounded-xl transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    Continue to Workouts
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full py-2 text-xs text-slate-500 hover:text-rose-400 font-medium transition-colors cursor-pointer"
+                  >
+                    Sign out of this account
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* MANAGE PROFILE FORM */
+              <form onSubmit={handleSaveProfile} className="space-y-4 max-h-[62vh] overflow-y-auto pr-1">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(false)}
+                    className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Back to Profile
+                  </button>
+                  <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
+                    Edit Details
+                  </span>
+                </div>
+
+                {saveSuccessMsg && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs text-center font-medium flex items-center justify-center gap-1.5 animate-in fade-in">
+                    <Check className="w-4 h-4" />
+                    {saveSuccessMsg}
+                  </div>
+                )}
+
+                {errorMsg && (
+                  <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs text-center font-medium">
+                    {errorMsg}
+                  </div>
+                )}
+
+                {/* Profile Picture Upload Header */}
+                <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-orange-500 bg-slate-950 shrink-0 flex items-center justify-center">
+                    {profileForm.photoURL ? (
+                      <img
+                        src={profileForm.photoURL}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-orange-400" />
+                    )}
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <span className="text-xs font-bold text-white block">Profile Picture</span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-2.5 py-1 text-[11px] font-semibold bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 border border-orange-500/40 rounded-lg transition-all cursor-pointer"
+                      >
+                        Upload Photo
+                      </button>
+                      {profileForm.photoURL && (
+                        <button
+                          type="button"
+                          onClick={() => setProfileForm((prev) => ({ ...prev, photoURL: '' }))}
+                          className="px-2 py-1 text-[11px] text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Full Name */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profileForm.name}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  />
+                </div>
+
+                {/* Phone & Email in 2 columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, phone: e.target.value }))}
+                      placeholder="+91 9876543210"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
+                      placeholder="member@gymnation.fit"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* DOB & Gender */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Date of Birth
+                    </label>
+                    <CustomDatePicker
+                      value={profileForm.dob}
+                      onChange={(dateStr) => setProfileForm((prev) => ({ ...prev, dob: dateStr }))}
+                      placeholder="DD-MM-YYYY"
+                      minYear={1940}
+                      maxYear={new Date().getFullYear()}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Gender
+                    </label>
+                    <select
+                      value={profileForm.gender}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, gender: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Blood Group & Emergency Contact */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Blood Group
+                    </label>
+                    <select
+                      value={profileForm.bloodGroup}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, bloodGroup: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                    >
+                      <option value="">Select Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Emergency Contact
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileForm.emergencyContact}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, emergencyContact: e.target.value }))}
+                      placeholder="Contact Number"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Primary Fitness Goal */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    Primary Fitness Goal
+                  </label>
+                  <select
+                    value={profileForm.fitnessGoal}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, fitnessGoal: e.target.value }))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs focus:outline-none focus:border-orange-500 transition-colors cursor-pointer"
+                  >
+                    <option value="Weight Loss">Weight Loss & Fat Burn</option>
+                    <option value="Muscle Building">Muscle Building & Hypertrophy</option>
+                    <option value="Strength Training">Strength & Powerlifting</option>
+                    <option value="Endurance">Cardio & Athletic Endurance</option>
+                    <option value="General Fitness">General Health & Fitness</option>
+                    <option value="CrossFit / HIIT">CrossFit & HIIT Training</option>
+                  </select>
+                </div>
+
+                {/* Height, Weight in 2 columns */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Height (cm)
+                    </label>
+                    <input
+                      type="number"
+                      value={profileForm.height}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, height: e.target.value }))}
+                      placeholder="e.g. 178"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Weight (kg)
+                    </label>
+                    <input
+                      type="number"
+                      value={profileForm.weight}
+                      onChange={(e) => setProfileForm((prev) => ({ ...prev, weight: e.target.value }))}
+                      placeholder="e.g. 75"
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Address / Location */}
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                    City / Address
+                  </label>
+                  <input
+                    type="text"
+                    value={profileForm.address}
+                    onChange={(e) => setProfileForm((prev) => ({ ...prev, address: e.target.value }))}
+                    placeholder="e.g. Bangalore, Indiranagar"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:border-orange-500 transition-colors"
+                  />
+                </div>
+
+                {/* Form Buttons */}
+                <div className="flex items-center gap-2 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(false)}
+                    className="w-1/3 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-2/3 py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        SAVE PROFILE
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         ) : step === 'success' ? (
           /* SUCCESS STATE */
@@ -613,6 +1190,8 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
                 </button>.
               </p>
             </div>
+            {/* Hidden reCAPTCHA container for Firebase Phone Auth */}
+            <div id="recaptcha-container" />
           </div>
         )}
       </div>

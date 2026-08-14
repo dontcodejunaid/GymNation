@@ -50,14 +50,25 @@ function App() {
   const [isLegalModalOpen, setIsLegalModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState('terms');
 
+  const [currentUser, setCurrentUser] = useState(null);
+
   const handleOpenLegal = (tab = 'terms') => {
     setLegalModalTab(tab);
     setIsLegalModalOpen(true);
   };
 
-  // Trigger Auth Modal right after Splash animation ends
+  // Trigger Auth Modal right after Splash animation ends only if NOT already logged in
   const handleSplashFinish = () => {
-    setIsAuthModalOpen(true);
+    try {
+      const savedUser = localStorage.getItem('gymnation_user');
+      if (!savedUser && !currentUser) {
+        setIsAuthModalOpen(true);
+      }
+    } catch (e) {
+      if (!currentUser) {
+        setIsAuthModalOpen(true);
+      }
+    }
   };
 
   useEffect(() => {
@@ -70,6 +81,15 @@ function App() {
       }
     } catch (e) {
       console.error('Failed to parse stored pass:', e);
+    }
+
+    try {
+      const savedUser = localStorage.getItem('gymnation_user');
+      if (savedUser) {
+        setCurrentUser(JSON.parse(savedUser));
+      }
+    } catch (e) {
+      console.error('Failed to parse stored user:', e);
     }
   }, []);
 
@@ -154,6 +174,7 @@ function App() {
       <OffersBanner onClaimOffer={handleClaimOffer} />
 
       <RandomLetterSwapNav
+        currentUser={currentUser}
         onOpenRecovery={() => setIsRecoveryModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
       />
@@ -187,14 +208,19 @@ function App() {
       {/* Modals */}
       <GymNationAuthModal
         isOpen={isAuthModalOpen}
+        currentUser={currentUser}
         onClose={() => {
           setIsAuthModalOpen(false);
           try {
             sessionStorage.setItem('gymnation_auth_dismissed', 'true');
           } catch (e) {}
         }}
-        onLoginSuccess={() => {
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
           setIsAuthModalOpen(false);
+        }}
+        onLogoutSuccess={() => {
+          setCurrentUser(null);
         }}
         onOpenLegal={handleOpenLegal}
       />

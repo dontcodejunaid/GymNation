@@ -45,7 +45,7 @@ const hours = [
   { days: 'Mon - Sun', shift: 'Evening Shift', time: '5:00 PM - 10:00 PM' },
 ];
 
-export default function Footer() {
+export default function Footer({ onOpenLegal }) {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -234,7 +234,26 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-14 flex flex-col items-center justify-between gap-3 border-t border-slate-800/60 pt-7 text-xs text-slate-500 sm:flex-row">
-          <p>&copy; {new Date().getFullYear()} Gymnation Fitness Centre. All rights reserved.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <p>&copy; {new Date().getFullYear()} Gymnation Fitness Centre. All rights reserved.</p>
+            <div className="flex items-center gap-3 text-slate-400">
+              <button
+                type="button"
+                onClick={() => onOpenLegal && onOpenLegal('terms')}
+                className="hover:text-orange-400 transition-colors cursor-pointer"
+              >
+                Terms of Service
+              </button>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={() => onOpenLegal && onOpenLegal('privacy')}
+                className="hover:text-orange-400 transition-colors cursor-pointer"
+              >
+                Privacy Policy
+              </button>
+            </div>
+          </div>
           <p>
             Designed for <span className="font-semibold text-slate-400">Gymnation Fitness Centre</span>
           </p>

@@ -257,7 +257,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
       const existingLocal = findUserProfile(lookupEmail) || findUserProfile(googleUser.uid);
       let existingRemote = null;
       try {
-        existingRemote = await getUserFromFirebase(lookupEmail) || await getUserFromFirebase(googleUser.uid);
+        existingRemote = (await getUserFromFirebase(lookupEmail)) || (await getUserFromFirebase(googleUser.uid));
       } catch (e) {
         console.warn('Google user profile lookup note:', e);
       }
@@ -267,8 +267,9 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
       const authenticatedUser = {
         ...existingProfile,
         name: existingProfile.name || googleUser.displayName || 'GymNation Athlete',
-        email: googleUser.email || existingProfile.email || '',
-        photoURL: existingProfile.photoURL || googleUser.photoURL || '',
+        email: (googleUser.email || existingProfile.email || '').toLowerCase().trim(),
+        phone: existingProfile.phone || '',
+        photoURL: googleUser.photoURL || existingProfile.photoURL || '',
         dob: existingProfile.dob || '',
         gender: existingProfile.gender || 'Prefer not to say',
         bloodGroup: existingProfile.bloodGroup || '',
@@ -277,7 +278,7 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
         height: existingProfile.height || '',
         weight: existingProfile.weight || '',
         address: existingProfile.address || '',
-        uid: googleUser.uid,
+        uid: existingProfile.uid || googleUser.uid,
         provider: 'Google',
         lastLoginAt: new Date().toISOString(),
         loggedInAt: new Date().toISOString()
@@ -582,6 +583,9 @@ export default function GymNationAuthModal({ isOpen, onClose, onLoginSuccess, on
                           src={activeUser.photoURL}
                           alt={activeUser.name || 'Member'}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full bg-orange-500/10 flex items-center justify-center text-orange-400">

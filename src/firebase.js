@@ -205,15 +205,18 @@ export async function saveUserToFirebase(userProfile) {
   if (!userProfile) return null;
   
   try {
-    // Deterministic Document ID based on Phone Number, Email, or UID (never purely random)
     const cleanPhone = (userProfile.phone || '').replace(/\D/g, '').slice(-10);
     const cleanEmail = (userProfile.email || '').toLowerCase().trim();
     
+    // First, check if there's already an existing record by email, phone, or uid to maintain the same doc ID
     let cleanDocId = '';
-    if (cleanPhone && cleanPhone.length >= 10) {
-      cleanDocId = `phone-${cleanPhone}`;
+    const existing = await getUserFromFirebase(cleanEmail || cleanPhone || userProfile.uid);
+    if (existing && existing.id) {
+      cleanDocId = existing.id;
     } else if (cleanEmail && cleanEmail.includes('@')) {
       cleanDocId = `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}`;
+    } else if (cleanPhone && cleanPhone.length >= 10) {
+      cleanDocId = `phone-${cleanPhone}`;
     } else if (userProfile.uid) {
       cleanDocId = `uid-${userProfile.uid.replace(/[^a-zA-Z0-9_-]+/g, '-')}`;
     } else {
@@ -222,27 +225,29 @@ export async function saveUserToFirebase(userProfile) {
 
     if (db) {
       const record = {
-        uid: userProfile.uid || cleanDocId,
+        ...(existing || {}),
+        ...userProfile,
+        uid: userProfile.uid || existing?.uid || cleanDocId,
         id: cleanDocId,
-        memberName: userProfile.name || 'GymNation Member',
-        name: userProfile.name || 'GymNation Member',
-        phone: userProfile.phone || '',
-        email: userProfile.email || '',
-        photoURL: userProfile.photoURL || '',
-        dob: userProfile.dob || '',
-        gender: userProfile.gender || '',
-        bloodGroup: userProfile.bloodGroup || '',
-        emergencyContact: userProfile.emergencyContact || '',
-        address: userProfile.address || '',
-        fitnessGoal: userProfile.fitnessGoal || '',
-        height: userProfile.height || '',
-        weight: userProfile.weight || '',
-        authProvider: userProfile.provider || 'Phone',
-        provider: userProfile.provider || 'Phone',
-        planName: userProfile.planName || 'Free Access / Member Sign-up',
-        status: userProfile.status || 'Active',
-        createdAt: userProfile.createdAt || new Date().toISOString(),
-        signedUpAt: userProfile.signedUpAt || new Date().toISOString(),
+        memberName: userProfile.name || existing?.name || existing?.memberName || 'GymNation Member',
+        name: userProfile.name || existing?.name || existing?.memberName || 'GymNation Member',
+        phone: userProfile.phone || existing?.phone || '',
+        email: (userProfile.email || existing?.email || '').toLowerCase().trim(),
+        photoURL: userProfile.photoURL || existing?.photoURL || '',
+        dob: userProfile.dob || existing?.dob || '',
+        gender: userProfile.gender || existing?.gender || 'Prefer not to say',
+        bloodGroup: userProfile.bloodGroup || existing?.bloodGroup || '',
+        emergencyContact: userProfile.emergencyContact || existing?.emergencyContact || '',
+        address: userProfile.address || existing?.address || '',
+        fitnessGoal: userProfile.fitnessGoal || existing?.fitnessGoal || 'General Fitness',
+        height: userProfile.height || existing?.height || '',
+        weight: userProfile.weight || existing?.weight || '',
+        authProvider: userProfile.provider || existing?.provider || 'Phone',
+        provider: userProfile.provider || existing?.provider || 'Phone',
+        planName: userProfile.planName || existing?.planName || 'Free Access / Member Sign-up',
+        status: userProfile.status || existing?.status || 'Active',
+        createdAt: userProfile.createdAt || existing?.createdAt || new Date().toISOString(),
+        signedUpAt: userProfile.signedUpAt || existing?.signedUpAt || new Date().toISOString(),
         lastLoginAt: userProfile.lastLoginAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -282,6 +287,7 @@ export async function saveUserToFirebase(userProfile) {
 
 /**
  * Fetch existing user profile from Firebase Firestore by phone, email, or uid
+ * Searches deterministically across doc IDs and scans fields for email / phone unification.
  */
 export async function getUserFromFirebase(identifier) {
   if (!db || !identifier) return null;
@@ -293,8 +299,8 @@ export async function getUserFromFirebase(identifier) {
 
     // Check candidate doc IDs
     const candidateIds = [
-      cleanDigits && cleanDigits.length >= 10 ? `phone-${cleanDigits}` : null,
       cleanEmail.includes('@') ? `email-${cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-')}` : null,
+      cleanDigits && cleanDigits.length >= 10 ? `phone-${cleanDigits}` : null,
       `uid-${rawStr.replace(/[^a-zA-Z0-9_-]+/g, '-')}`,
       rawStr.replace(/\+/g, '').replace(/@/g, '-at-').replace(/[^a-zA-Z0-9_-]+/g, '-').toLowerCase()
     ].filter(Boolean);
@@ -303,33 +309,63 @@ export async function getUserFromFirebase(identifier) {
       try {
         const directDoc = await getDoc(doc(db, GYMNATION_USERS_COLLECTION, docId));
         if (directDoc.exists() && directDoc.data()) {
-          return directDoc.data();
+          return { id: directDoc.id, ...directDoc.data() };
         }
       } catch (e) {}
 
       try {
         const signupDoc = await getDoc(doc(db, MEMBER_SIGNUPS_COLLECTION, docId));
         if (signupDoc.exists() && signupDoc.data()) {
-          return signupDoc.data();
+          return { id: signupDoc.id, ...signupDoc.data() };
+        }
+      } catch (e) {}
+
+      try {
+        const userDoc = await getDoc(doc(db, USERS_COLLECTION, docId));
+        if (userDoc.exists() && userDoc.data()) {
+          return { id: userDoc.id, ...userDoc.data() };
         }
       } catch (e) {}
     }
 
-    // Also scan gymnation_users collection by phone number field match if doc ID didn't hit
-    if (cleanDigits && cleanDigits.length >= 10) {
-      try {
-        const querySnapshot = await getDocs(collection(db, GYMNATION_USERS_COLLECTION));
-        for (const docItem of querySnapshot.docs) {
-          const data = docItem.data();
-          const itemDigits = (data.phone || '').replace(/\D/g, '').slice(-10);
-          if (itemDigits === cleanDigits) {
-            return data;
-          }
+    // Query scan gymnation_users collection by matching email or phone number fields
+    try {
+      const querySnapshot = await getDocs(collection(db, GYMNATION_USERS_COLLECTION));
+      for (const docItem of querySnapshot.docs) {
+        const data = docItem.data();
+        const itemDigits = (data.phone || '').replace(/\D/g, '').slice(-10);
+        const itemEmail = (data.email || '').toLowerCase().trim();
+
+        if (cleanEmail.includes('@') && itemEmail === cleanEmail) {
+          return { id: docItem.id, ...data };
         }
-      } catch (scanErr) {
-        console.warn('Firestore scan note:', scanErr.message);
+        if (cleanDigits && cleanDigits.length >= 10 && itemDigits === cleanDigits) {
+          return { id: docItem.id, ...data };
+        }
+        if (data.uid && data.uid === rawStr) {
+          return { id: docItem.id, ...data };
+        }
       }
+    } catch (scanErr) {
+      console.warn('Firestore scan note:', scanErr.message);
     }
+
+    // Also check membershipSignups collection by field match if not found yet
+    try {
+      const querySnapshot = await getDocs(collection(db, MEMBER_SIGNUPS_COLLECTION));
+      for (const docItem of querySnapshot.docs) {
+        const data = docItem.data();
+        const itemDigits = (data.phone || '').replace(/\D/g, '').slice(-10);
+        const itemEmail = (data.email || '').toLowerCase().trim();
+
+        if (cleanEmail.includes('@') && itemEmail === cleanEmail) {
+          return { id: docItem.id, ...data };
+        }
+        if (cleanDigits && cleanDigits.length >= 10 && itemDigits === cleanDigits) {
+          return { id: docItem.id, ...data };
+        }
+      }
+    } catch (scanErr2) {}
   } catch (err) {
     console.warn('Firebase user fetch notice:', err.message);
   }

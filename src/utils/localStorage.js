@@ -131,18 +131,34 @@ export function saveUserProfile(userProfileOrPhone, maybeName = '', maybeEmail =
   let key = '';
 
   if (typeof userProfileOrPhone === 'object') {
-    profileData = { ...userProfileOrPhone, updatedAt: new Date().toISOString() };
-    const phoneOrId = profileData.phone || profileData.email || profileData.uid || 'user';
-    key = phoneOrId.toString().replace(/\D/g, '').slice(-10) || phoneOrId;
+    const cleanPhone = (userProfileOrPhone.phone || '').replace(/\D/g, '').slice(-10);
+    const cleanEmail = (userProfileOrPhone.email || '').toLowerCase().trim();
+
+    // Check if an existing profile exists under phone, email, or UID to keep unified
+    const existing = findUserProfile(cleanEmail) || findUserProfile(cleanPhone) || findUserProfile(userProfileOrPhone.uid) || {};
+
+    profileData = {
+      ...existing,
+      ...userProfileOrPhone,
+      phone: userProfileOrPhone.phone || existing.phone || '',
+      email: (userProfileOrPhone.email || existing.email || '').toLowerCase().trim(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // Primary key prioritizes clean 10-digit phone, then email, then uid
+    key = cleanPhone || (cleanEmail ? cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-') : '') || profileData.uid || 'user';
   } else {
     const phone = userProfileOrPhone;
-    const name = maybeName;
-    const email = maybeEmail;
-    key = phone.replace(/\D/g, '').slice(-10);
+    const cleanPhone = phone.replace(/\D/g, '').slice(-10);
+    const cleanEmail = (maybeEmail || '').toLowerCase().trim();
+    const existing = findUserProfile(cleanEmail) || findUserProfile(cleanPhone) || {};
+
+    key = cleanPhone || (cleanEmail ? cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-') : 'user');
     profileData = {
-      name: name.trim(),
-      phone: phone.trim(),
-      email: email.trim(),
+      ...existing,
+      name: (maybeName || existing.name || '').trim(),
+      phone: phone.trim() || existing.phone || '',
+      email: cleanEmail || existing.email || '',
       updatedAt: new Date().toISOString()
     };
   }
@@ -152,6 +168,20 @@ export function saveUserProfile(userProfileOrPhone, maybeName = '', maybeEmail =
     ...(profiles[key] || {}),
     ...profileData
   };
+
+  // If both email and phone are present, create alias cross-reference keys so future lookups find the exact same record
+  const cleanPhone = (profileData.phone || '').replace(/\D/g, '').slice(-10);
+  const cleanEmail = (profileData.email || '').toLowerCase().trim();
+  if (cleanPhone && cleanPhone.length >= 10) {
+    profiles[cleanPhone] = profiles[key];
+  }
+  if (cleanEmail && cleanEmail.includes('@')) {
+    const emailKey = cleanEmail.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-');
+    profiles[emailKey] = profiles[key];
+  }
+  if (profileData.uid) {
+    profiles[profileData.uid] = profiles[key];
+  }
 
   try {
     localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
@@ -164,22 +194,34 @@ export function findUserProfile(identifier) {
   if (!identifier) return null;
   const profiles = getUserProfiles();
   
+  const rawStr = String(identifier).trim();
+  const cleanIdLower = rawStr.toLowerCase();
+  const cleanPhone = rawStr.replace(/\D/g, '').slice(-10);
+
   // Direct key check
   if (profiles[identifier]) return profiles[identifier];
-
-  // Check by last 10 digits of phone
-  const cleanPhone = identifier.toString().replace(/\D/g, '').slice(-10);
   if (cleanPhone && profiles[cleanPhone]) return profiles[cleanPhone];
+  if (cleanIdLower.includes('@')) {
+    const emailKey = cleanIdLower.replace(/@/g, '-at-').replace(/[^a-z0-9_-]+/g, '-');
+    if (profiles[emailKey]) return profiles[emailKey];
+  }
 
-  // Search by email or phone property
+  // Search by email, phone property, uid, or id match
   const all = Object.values(profiles);
-  const cleanIdLower = identifier.toString().toLowerCase().trim();
-  const matched = all.find((p) => 
-    (p.email && p.email.toLowerCase().trim() === cleanIdLower) ||
-    (p.phone && p.phone.replace(/\D/g, '').slice(-10) === cleanPhone) ||
-    p.uid === identifier ||
-    p.id === identifier
-  );
+  const matched = all.find((p) => {
+    if (!p) return false;
+    const pEmail = (p.email || '').toLowerCase().trim();
+    const pPhone = (p.phone || '').replace(/\D/g, '').slice(-10);
+    const pUid = p.uid || '';
+    const pId = p.id || '';
+
+    return (
+      (cleanIdLower.includes('@') && pEmail === cleanIdLower) ||
+      (cleanPhone && cleanPhone.length >= 10 && pPhone === cleanPhone) ||
+      pUid === rawStr ||
+      pId === rawStr
+    );
+  });
 
   return matched || null;
 }

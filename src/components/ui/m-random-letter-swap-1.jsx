@@ -26,7 +26,7 @@ const trackedSections = [
   "#contact"
 ];
 
-export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, currentUser, currentPage = 'home', onNavigate }) {
+export default function RandomLetterSwapNav({ onOpenPass, onOpenRecovery, onOpenAuth, currentUser, currentPage = 'home', onNavigate }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(currentPage === 'contact' ? '#contact' : '#home');
@@ -168,17 +168,31 @@ export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, curren
             </button>
           )}
 
-          {/* Find Pass / Digital Pass Recovery Button */}
-          {onOpenRecovery && (
-            <button
-              aria-label="Find or Recover Digital Pass"
-              title="Find or Recover Lost Digital Pass"
-              className="hidden md:flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 transition-all duration-300 hover:border-orange-500/50 hover:bg-orange-500/20 hover:text-orange-400 active:scale-95 cursor-pointer shrink-0"
-              onClick={onOpenRecovery}
-              type="button"
-            >
-              <QrCode className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-            </button>
+          {/* Digital Pass / Recovery Button: Logged in users get direct pass access, guest users get recovery lookup */}
+          {currentUser ? (
+            onOpenPass && (
+              <button
+                aria-label="My Digital Pass"
+                title="View Digital Gym Entry Pass"
+                className="hidden md:flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-400 transition-all duration-300 hover:border-orange-500 hover:bg-orange-500 hover:text-white active:scale-95 cursor-pointer shrink-0"
+                onClick={onOpenPass}
+                type="button"
+              >
+                <QrCode className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+              </button>
+            )
+          ) : (
+            onOpenRecovery && (
+              <button
+                aria-label="Find or Recover Digital Pass"
+                title="Find or Recover Lost Digital Pass"
+                className="hidden md:flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/60 text-slate-300 transition-all duration-300 hover:border-orange-500/50 hover:bg-orange-500/20 hover:text-orange-400 active:scale-95 cursor-pointer shrink-0"
+                onClick={onOpenRecovery}
+                type="button"
+              >
+                <QrCode className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+              </button>
+            )
           )}
 
           {/* BMI Calculator Quick Access Icon Button */}
@@ -274,18 +288,34 @@ export default function RandomLetterSwapNav({ onOpenRecovery, onOpenAuth, curren
                   <span className="font-bold">BMI Calculator</span>
                 </button>
 
-                {onOpenRecovery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      onOpenRecovery();
-                    }}
-                    className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-white hover:border-orange-500/50"
-                  >
-                    <QrCode className="h-4 w-4 text-orange-500" />
-                    <span className="font-bold">Find My Pass</span>
-                  </button>
+                {currentUser ? (
+                  onOpenPass && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenPass();
+                      }}
+                      className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-orange-500/40 bg-orange-500/10 text-orange-400 hover:text-white hover:bg-orange-500"
+                    >
+                      <QrCode className="h-4 w-4 text-orange-400" />
+                      <span className="font-bold">My Pass</span>
+                    </button>
+                  )
+                ) : (
+                  onOpenRecovery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onOpenRecovery();
+                      }}
+                      className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-slate-800 bg-slate-900/80 text-slate-300 hover:text-white hover:border-orange-500/50"
+                    >
+                      <QrCode className="h-4 w-4 text-orange-500" />
+                      <span className="font-bold">Find My Pass</span>
+                    </button>
+                  )
                 )}
 
                 <a

@@ -613,6 +613,104 @@ export function subscribeToMembershipSignups(callback) {
 }
 
 /**
+ * Fetch and construct user's Digital Member Pass directly from Firebase Firestore
+ * Checks bookings, membership signups, and user profile data for matching phone, email, or uid.
+ */
+export async function getMemberPassFromFirebase(user) {
+  if (!user) return null;
+  const rawId = user.uid || '';
+  const rawPhone = user.phone || user.phoneNumber || '';
+  const rawEmail = user.email || '';
+  const cleanDigits = rawPhone.replace(/\D/g, '').slice(-10);
+  const cleanEmail = rawEmail.toLowerCase().trim();
+
+  try {
+    const [cloudBookings, cloudSignups] = await Promise.all([
+      getBookingsFromFirebase().catch(() => []),
+      getMembershipSignupsFromFirebase().catch(() => [])
+    ]);
+
+    // Find all matching bookings
+    const matchedBookings = (cloudBookings || []).filter((b) => {
+      if (!b) return false;
+      const bPhone = String(b.phone || '').replace(/\D/g, '').slice(-10);
+      const bEmail = String(b.email || '').toLowerCase().trim();
+      const bUid = String(b.uid || '');
+
+      return (
+        (cleanDigits && bPhone && bPhone === cleanDigits) ||
+        (cleanEmail && bEmail && bEmail === cleanEmail) ||
+        (rawId && bUid && bUid === rawId)
+      );
+    });
+
+    // Find matching signup
+    const matchedSignup = (cloudSignups || []).find((s) => {
+      if (!s) return false;
+      const sPhone = String(s.customer?.phone || s.phone || '').replace(/\D/g, '').slice(-10);
+      const sEmail = String(s.customer?.email || s.email || '').toLowerCase().trim();
+      const sUid = String(s.uid || '');
+
+      return (
+        (cleanDigits && sPhone && sPhone === cleanDigits) ||
+        (cleanEmail && sEmail && sEmail === cleanEmail) ||
+        (rawId && sUid && sUid === rawId)
+      );
+    });
+
+    // Build passes list
+    const passes = matchedBookings.map((b, idx) => {
+      const bId = withPassPrefix(String(b.id || `GN-${cleanDigits ? cleanDigits.slice(-6) : 849200 + idx}`)).toUpperCase();
+      return {
+        id: bId,
+        service: String(b.service || user.planName || 'Gymnation Membership Pass'),
+        name: String(b.name || user.name || 'Gymnation Member'),
+        date: b.date || 'Active',
+        time: b.time || '',
+        trainer: b.trainer || '',
+        status: b.status || 'Active'
+      };
+    });
+
+    const fallbackPassId = cleanDigits && cleanDigits.length >= 8
+      ? `GN-${cleanDigits.slice(-8)}`
+      : (user.uid ? `GN-${user.uid.slice(-6).toUpperCase()}` : 'GN-84920194');
+
+    const primaryPassId = passes[0]?.id || withPassPrefix(matchedSignup?.docId || fallbackPassId).toUpperCase();
+
+    const memberPass = {
+      customer: {
+        name: user.name || user.displayName || matchedSignup?.customer?.name || 'Gymnation Member',
+        phone: user.phone || user.phoneNumber || matchedSignup?.customer?.phone || '',
+        email: user.email || matchedSignup?.customer?.email || ''
+      },
+      plan: {
+        name: user.planName || matchedSignup?.plan?.name || passes[0]?.service || 'Gymnation Active Member Pass'
+      },
+      paymentResult: {
+        paymentId: primaryPassId.replace(/^GN-/i, '')
+      },
+      passes: passes.length > 0 ? passes : [
+        {
+          id: primaryPassId,
+          service: user.planName || matchedSignup?.plan?.name || 'Gymnation Active Member Pass',
+          name: user.name || user.displayName || 'Gymnation Member',
+          date: 'Active',
+          time: 'All Day Access',
+          trainer: 'Gymnation Trainer',
+          status: 'Active'
+        }
+      ]
+    };
+
+    return memberPass;
+  } catch (err) {
+    console.warn('Error fetching member pass from Firebase:', err);
+    return null;
+  }
+}
+
+/**
  * Update an existing membership signup in Firebase Firestore
  */
 export async function updateMembershipSignupInFirebase(docIdOrMemberId, patch) {

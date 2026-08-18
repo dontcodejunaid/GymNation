@@ -6,27 +6,64 @@ import logoImg from '../assets/logo.png';
 import { generateStaticToken } from '../services/qrEngine';
 import { withPassPrefix } from '../utils/passId';
 
-export default function DigitalMemberCardModal({ memberData, isOpen, onClose, onOpenRecovery }) {
+export default function DigitalMemberCardModal({ memberData, currentUser, isOpen, onClose, onOpenRecovery }) {
   const cardRef = useRef(null);
   const [selectedPassIndex, setSelectedPassIndex] = useState(0);
 
+  // If memberData is null but user is logged in, construct memberData from currentUser
+  const effectiveData = useMemo(() => {
+    if (memberData) return memberData;
+    if (currentUser) {
+      const cleanDigits = (currentUser.phone || '').replace(/\D/g, '').slice(-10);
+      const fallbackId = cleanDigits && cleanDigits.length >= 8
+        ? `GN-${cleanDigits.slice(-8)}`
+        : (currentUser.uid ? `GN-${currentUser.uid.slice(-6).toUpperCase()}` : 'GN-84920194');
+
+      return {
+        customer: {
+          name: currentUser.name || currentUser.displayName || 'Gymnation Member',
+          phone: currentUser.phone || currentUser.phoneNumber || '',
+          email: currentUser.email || ''
+        },
+        plan: {
+          name: currentUser.planName || 'Gymnation Member Pass'
+        },
+        paymentResult: {
+          paymentId: fallbackId.replace(/^GN-/i, '')
+        },
+        passes: [
+          {
+            id: fallbackId,
+            service: currentUser.planName || 'Gymnation Member Pass',
+            name: currentUser.name || currentUser.displayName || 'Gymnation Member',
+            date: 'Active',
+            time: 'All Day Access',
+            trainer: 'Gymnation Trainer',
+            status: 'Active'
+          }
+        ]
+      };
+    }
+    return null;
+  }, [memberData, currentUser]);
+
   const passesList = useMemo(() => {
-    if (!memberData) return [];
+    if (!effectiveData) return [];
     let list = [];
-    if (Array.isArray(memberData.passes) && memberData.passes.length > 0) {
-      list = memberData.passes;
+    if (Array.isArray(effectiveData.passes) && effectiveData.passes.length > 0) {
+      list = effectiveData.passes;
     } else {
-      const rawPayId = String(memberData.paymentResult?.paymentId || '2026-8492');
+      const rawPayId = String(effectiveData.paymentResult?.paymentId || '2026-8492');
       const cleanPayId = withPassPrefix(rawPayId).toUpperCase();
 
       list = [
         {
           id: cleanPayId,
-          service: String(memberData.plan?.name || 'Standard Membership'),
-          name: String(memberData.customer?.name || 'Gymnation Member'),
-          date: memberData.date || 'Active',
-          time: memberData.time || '',
-          trainer: memberData.trainer || '',
+          service: String(effectiveData.plan?.name || 'Standard Membership'),
+          name: String(effectiveData.customer?.name || 'Gymnation Member'),
+          date: effectiveData.date || 'Active',
+          time: effectiveData.time || '',
+          trainer: effectiveData.trainer || '',
           status: 'Active'
         }
       ];
@@ -43,15 +80,15 @@ export default function DigitalMemberCardModal({ memberData, isOpen, onClose, on
       seen.add(key);
       return true;
     });
-  }, [memberData]);
+  }, [effectiveData]);
 
-  if (!isOpen || !memberData || passesList.length === 0) return null;
+  if (!isOpen || !effectiveData || passesList.length === 0) return null;
 
   const activeIndex = selectedPassIndex < passesList.length ? selectedPassIndex : 0;
   const currentPass = passesList[activeIndex] || passesList[0];
 
-  const memberName = String(currentPass.name || currentPass.customerName || memberData.customer?.name || 'Gymnation Member');
-  const memberPhone = String(memberData.customer?.phone || '+91 98765 43210');
+  const memberName = String(currentPass.name || currentPass.customerName || effectiveData.customer?.name || 'Gymnation Member');
+  const memberPhone = String(effectiveData.customer?.phone || '+91 98765 43210');
   const planName = String(currentPass.service || 'Standard Membership');
   const rawPassId = String(currentPass.id || 'GN-84920194');
   const passId = withPassPrefix(rawPassId).toUpperCase();

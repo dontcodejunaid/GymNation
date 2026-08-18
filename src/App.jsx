@@ -30,7 +30,7 @@ import LegalModal from './components/LegalModal';
 
 import { trackEvent } from './utils/analytics';
 import { saveBooking } from './utils/localStorage';
-import { saveBookingToFirebase } from './firebase';
+import { saveBookingToFirebase, getMemberPassFromFirebase } from './firebase';
 import { recordMembershipSignup } from './utils/membershipSignups';
 import { withPassPrefix } from './utils/passId';
 
@@ -112,7 +112,17 @@ function App() {
     try {
       const savedUser = localStorage.getItem('gymnation_user');
       if (savedUser) {
-        setCurrentUser(JSON.parse(savedUser));
+        const parsed = JSON.parse(savedUser);
+        setCurrentUser(parsed);
+        // Automatically sync latest pass from Firebase for logged in user
+        getMemberPassFromFirebase(parsed).then((cloudPass) => {
+          if (cloudPass) {
+            setActiveMemberPass(cloudPass);
+            try {
+              localStorage.setItem('gymnation_member_pass', JSON.stringify(cloudPass));
+            } catch (err) {}
+          }
+        }).catch(() => {});
       }
     } catch (e) {
       console.error('Failed to parse stored user:', e);
@@ -247,6 +257,7 @@ function App() {
         currentUser={currentUser}
         currentPage={currentPage}
         onNavigate={handleNavigate}
+        onOpenPass={() => setIsPassModalOpen(true)}
         onOpenRecovery={() => setIsRecoveryModalOpen(true)}
         onOpenAuth={() => setIsAuthModalOpen(true)}
       />
@@ -281,6 +292,7 @@ function App() {
 
       {/* Integrated Floating Action Stack */}
       <FloatingActions
+        currentUser={currentUser}
         activeMemberPass={activeMemberPass}
         onOpenPass={() => setIsPassModalOpen(true)}
         onOpenRecovery={() => setIsRecoveryModalOpen(true)}
@@ -298,12 +310,26 @@ function App() {
             sessionStorage.setItem('gymnation_auth_dismissed', 'true');
           } catch (e) {}
         }}
-        onLoginSuccess={(user) => {
+        onLoginSuccess={async (user) => {
           setCurrentUser(user);
           setIsAuthModalOpen(false);
+          // Automatically load user's digital pass from Firebase immediately on login
+          try {
+            const cloudPass = await getMemberPassFromFirebase(user);
+            if (cloudPass) {
+              setActiveMemberPass(cloudPass);
+              localStorage.setItem('gymnation_member_pass', JSON.stringify(cloudPass));
+            }
+          } catch (e) {
+            console.warn('Error loading user pass on login:', e);
+          }
         }}
         onLogoutSuccess={() => {
           setCurrentUser(null);
+          setActiveMemberPass(null);
+          try {
+            localStorage.removeItem('gymnation_member_pass');
+          } catch (e) {}
         }}
         onOpenLegal={handleOpenLegal}
       />
@@ -324,12 +350,13 @@ function App() {
 
       <DigitalMemberCardModal
         memberData={activeMemberPass}
+        currentUser={currentUser}
         isOpen={isPassModalOpen}
         onClose={() => setIsPassModalOpen(false)}
-        onOpenRecovery={() => {
+        onOpenRecovery={!currentUser ? () => {
           setIsPassModalOpen(false);
           setIsRecoveryModalOpen(true);
-        }}
+        } : undefined}
       />
 
       <PassRecoveryModal

@@ -9,7 +9,7 @@ import { ADMIN_HASH } from '../admin/AdminPortal';
  * 1. My Digital Pass (when active pass exists)
  * 2. FAQ Assistant ("Ask Us")
  */
-export default function FloatingActions({ activeMemberPass, onOpenPass, onOpenRecovery }) {
+export default function FloatingActions({ currentUser, activeMemberPass, onOpenPass, onOpenRecovery }) {
   const [chatOpen, setChatOpen] = useState(false);
   const [hidden, setHidden] = useState(() => window.location.hash === ADMIN_HASH);
   const [savedPass, setSavedPass] = useState(activeMemberPass);
@@ -46,12 +46,14 @@ export default function FloatingActions({ activeMemberPass, onOpenPass, onOpenRe
 
   if (hidden) return null;
 
+  const hasPassOrLoggedIn = Boolean(savedPass || currentUser);
+
   return (
     <div className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 flex flex-col items-end gap-2 sm:gap-3 max-w-[calc(100vw-1.5rem)] print:hidden">
       {chatOpen && <FaqChatbot onClose={() => setChatOpen(false)} open={chatOpen} />}
 
-      {/* Digital Pass Button */}
-      {savedPass ? (
+      {/* Digital Pass Button: Logged-in/Pass holders view pass directly, Guests see Find My Pass */}
+      {hasPassOrLoggedIn ? (
         <button
           onClick={onOpenPass}
           className="px-4 py-2.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-extrabold text-xs shadow-2xl flex items-center gap-2 border border-orange-400/40 animate-pulse transition-all hover:scale-105 cursor-pointer"

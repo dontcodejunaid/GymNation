@@ -47,7 +47,7 @@ A modern, high-performance, and feature-rich Web Application designed for **Gymn
 
 ---
 
-### 💳 Tiered Membership Plans (Monthly vs Yearly Discount Toggle)
+### 💳 Tiered Membership Plans (Monthly vs Yearly Discount)
 > *Interactive pricing tiers with real-time billing frequency toggle and instant checkout.*
 
 ![Membership Tiers](public/membership_yearly_1785909690394.png)

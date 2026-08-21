@@ -2,8 +2,6 @@
 
 A modern, high-performance, and feature-rich Web Application designed for **Gymnation Fitness Centre**. Built using **React 19**, **Vite**, **Tailwind CSS v4**, **Framer Motion**, **GSAP**, and **Google Firebase Firestore**, this application delivers an ultra-smooth, visually engaging user experience with interactive tools for fitness enthusiasts and robust management tools for gym owners.
 
----
-
 ## 📸 Screenshots & Showcase
 
 ### 💥 Hero Section & Landing Banner
